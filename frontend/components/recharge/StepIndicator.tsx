@@ -27,10 +27,11 @@ export function StepIndicator({ current }: { current: number }) {
           >
             <span
               className={cn(
-                "flex size-5 items-center justify-center rounded-full text-[11px] font-semibold transition-colors",
-                isActive && "bg-primary text-primary-foreground ring-4 ring-primary/15",
-                isDone && "bg-primary text-primary-foreground",
-                !isActive && !isDone && "bg-muted text-muted-foreground"
+                "flex items-center justify-center rounded-full font-bold transition-all",
+                isActive &&
+                  "size-7 bg-primary text-sm text-primary-foreground shadow-[0_0_0_5px_rgba(52,211,153,0.18),0_4px_14px_-2px_rgba(16,185,129,0.55)]",
+                isDone && "size-5 bg-primary text-[11px] text-primary-foreground",
+                !isActive && !isDone && "size-5 bg-muted text-[11px] text-muted-foreground"
               )}
             >
               {isDone ? <Check className="size-3" /> : stepNumber}

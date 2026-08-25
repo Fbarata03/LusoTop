@@ -41,7 +41,8 @@ export function OperadoraStep({
 
   return (
     <div>
-      <h3 className="font-heading text-xl font-semibold text-foreground">
+      <h3 className="flex items-center gap-2 font-heading text-2xl font-bold text-foreground">
+        <span className="h-6 w-1.5 rounded-full bg-primary" />
         Qual a operadora?
       </h3>
       <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
