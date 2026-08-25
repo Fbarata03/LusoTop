@@ -22,6 +22,10 @@ frontend/*.tsbuildinfo
 
 # Agent skills (local tooling, regenerate via `npx skills add ...`)
 .agents/
+skills-lock.json
+
+# Claude Code local session/permission state
+.claude/
 
 # IDE
 .idea/

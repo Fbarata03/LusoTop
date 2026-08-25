@@ -26,3 +26,6 @@ app:
   demo-mode: ${DEMO_MODE:true}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  jwt:
+    secret: ${JWT_SECRET:lusotop-local-dev-secret-change-me-in-production-please-32chars-min}
+    expiration-days: ${JWT_EXPIRATION_DAYS:7}
