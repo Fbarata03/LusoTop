@@ -21,16 +21,14 @@ export function StepIndicator({ current }: { current: number }) {
           <div
             key={label}
             className={cn(
-              "flex flex-1 flex-col items-center gap-1.5 border-b-2 py-3 text-xs",
-              isActive
-                ? "border-foreground"
-                : "border-transparent"
+              "flex flex-1 flex-col items-center gap-1.5 border-b-2 py-3 text-xs transition-colors",
+              isActive || isDone ? "border-primary" : "border-transparent"
             )}
           >
             <span
               className={cn(
-                "flex size-5 items-center justify-center rounded-full text-[11px] font-semibold",
-                isActive && "bg-foreground text-background",
+                "flex size-5 items-center justify-center rounded-full text-[11px] font-semibold transition-colors",
+                isActive && "bg-primary text-primary-foreground ring-4 ring-primary/15",
                 isDone && "bg-primary text-primary-foreground",
                 !isActive && !isDone && "bg-muted text-muted-foreground"
               )}
@@ -39,8 +37,8 @@ export function StepIndicator({ current }: { current: number }) {
             </span>
             <span
               className={cn(
-                "hidden font-medium sm:inline",
-                isActive ? "text-foreground" : "text-muted-foreground"
+                "hidden font-medium transition-colors sm:inline",
+                isActive || isDone ? "text-foreground" : "text-muted-foreground"
               )}
             >
               {label}

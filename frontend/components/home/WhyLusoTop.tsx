@@ -70,8 +70,10 @@ export function WhyLusoTop() {
 
         <div className="grid gap-6 sm:grid-cols-2">
           {BENEFITS.map((benefit) => (
-            <div key={benefit.title}>
-              <benefit.icon className="size-5 text-primary" strokeWidth={1.75} />
+            <div key={benefit.title} className="group">
+              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/15">
+                <benefit.icon className="size-5 text-primary" strokeWidth={1.75} />
+              </span>
               <h3 className="mt-3 font-semibold text-foreground">
                 {benefit.title}
               </h3>

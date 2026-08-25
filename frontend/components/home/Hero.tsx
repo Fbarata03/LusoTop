@@ -1,5 +1,13 @@
+"use client";
+
+import dynamic from "next/dynamic";
 import { CheckCircle2, Clock, Mail, ShieldCheck } from "lucide-react";
 import { RechargeWizard } from "@/components/recharge/RechargeWizard";
+
+const Globe3D = dynamic(
+  () => import("@/components/home/Globe3D").then((m) => m.Globe3D),
+  { ssr: false }
+);
 
 const TRUST_POINTS = [
   { icon: Clock, label: "Entrega imediata" },
@@ -11,7 +19,7 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden bg-lusotop-navy">
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
         style={{
           backgroundImage:
             "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
@@ -19,6 +27,13 @@ export function Hero() {
         }}
         aria-hidden="true"
       />
+
+      <div
+        className="pointer-events-none absolute top-1/2 right-[-8%] hidden h-[640px] w-[640px] -translate-y-1/2 md:block lg:right-[2%]"
+        aria-hidden="true"
+      >
+        <Globe3D />
+      </div>
 
       <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-start">

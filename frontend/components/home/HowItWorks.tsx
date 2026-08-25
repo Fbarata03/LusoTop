@@ -46,12 +46,14 @@ export function HowItWorks() {
           {STEPS.map((step) => (
             <div
               key={step.number}
-              className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6"
+              className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-white/[0.07]"
             >
               <span className="absolute top-4 right-5 font-heading text-4xl font-semibold text-white/10">
                 {step.number}
               </span>
-              <step.icon className="size-6 text-primary" strokeWidth={1.75} />
+              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+                <step.icon className="size-5 text-primary" strokeWidth={1.75} />
+              </span>
               <h3 className="mt-4 font-semibold text-white">{step.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-white/60">
                 {step.description}

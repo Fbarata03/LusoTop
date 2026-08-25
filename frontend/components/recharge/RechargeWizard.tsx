@@ -30,7 +30,7 @@ export function RechargeWizard() {
   const [state, setState] = useState<WizardState>(INITIAL_STATE);
 
   return (
-    <Card className="w-full max-w-md overflow-hidden py-0 gap-0">
+    <Card className="w-full max-w-md overflow-hidden py-0 gap-0 shadow-2xl shadow-black/40 ring-1 ring-white/10">
       <StepIndicator current={state.step} />
 
       <div className="p-6">

@@ -85,10 +85,10 @@ export function DestinoStep({
               disabled={disabled}
               onClick={() => onSelect(country)}
               className={cn(
-                "flex items-center justify-between rounded-xl border border-border px-4 py-3 text-left transition-colors",
+                "flex items-center justify-between rounded-xl border border-border px-4 py-3 text-left transition-all",
                 disabled
                   ? "cursor-not-allowed opacity-50"
-                  : "hover:border-primary hover:bg-primary/5"
+                  : "hover:border-primary hover:bg-primary/5 hover:shadow-sm active:scale-[0.98]"
               )}
             >
               <span className="flex items-center gap-3">

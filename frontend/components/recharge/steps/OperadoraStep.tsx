@@ -73,7 +73,7 @@ export function OperadoraStep({
               key={operator.id}
               type="button"
               onClick={() => onSelect(operator)}
-              className="rounded-xl border border-border px-4 py-3 text-left transition-colors hover:border-primary hover:bg-primary/5"
+              className="rounded-xl border border-border px-4 py-3 text-left transition-all hover:border-primary hover:bg-primary/5 hover:shadow-sm active:scale-[0.98]"
             >
               <span className="block font-medium text-foreground">
                 {operator.name}

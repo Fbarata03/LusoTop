@@ -68,7 +68,7 @@ export function ValorStep({
               key={product.id}
               type="button"
               onClick={() => onSelect(product)}
-              className="rounded-xl border border-border px-4 py-3 text-center font-medium text-foreground transition-colors hover:border-primary hover:bg-primary/5"
+              className="rounded-xl border border-border px-4 py-3 text-center font-medium text-foreground transition-all hover:border-primary hover:bg-primary/5 hover:shadow-sm active:scale-[0.98]"
             >
               {product.amount.toLocaleString("pt-PT")} {product.currency}
             </button>
