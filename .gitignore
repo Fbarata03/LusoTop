@@ -20,6 +20,9 @@ frontend/.env*.local
 frontend/next-env.d.ts
 frontend/*.tsbuildinfo
 
+# Agent skills (local tooling, regenerate via `npx skills add ...`)
+.agents/
+
 # IDE
 .idea/
 .vscode/
