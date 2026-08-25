@@ -6,7 +6,8 @@ Plataforma de recargas móveis internacionais para os 9 Estados-Membros da CPLP 
 Cabo Verde, Guiné-Bissau, Guiné Equatorial, Moçambique, Portugal, São Tomé e Príncipe, Timor-Leste).
 
 > **Estado atual: FASE 1 (arquitetura) + homepage com fluxo de recarga em modo DEMO.**
-> Não há integração real com fornecedores de pagamento ou airtime ainda — ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+> Verificado ponta-a-ponta (backend + frontend + Postgres real, sem erros de consola). Não há
+> integração real com fornecedores de pagamento ou airtime ainda — ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Stack
 
@@ -29,20 +30,31 @@ LusoTop/
 
 ### 1. Base de dados
 
+Duas opções, à escolha:
+
 ```bash
 docker compose up -d
 ```
 
-### 2. Backend (requer Java 21 + Maven)
+ou, se já tiver um PostgreSQL local instalado (qualquer versão recente), basta criar a role e a
+base de dados usadas por omissão pela aplicação:
+
+```sql
+CREATE ROLE lusotop LOGIN PASSWORD 'lusotop';
+CREATE DATABASE lusotop OWNER lusotop;
+```
+
+### 2. Backend (requer Java 21; o Maven Wrapper já está incluído)
 
 ```bash
 cd backend
-cp ../.env.example ../.env   # depois exporte as variáveis, ou configure no seu ambiente
-mvn spring-boot:run
+./mvnw spring-boot:run        # Windows: mvnw.cmd spring-boot:run
 ```
 
 A API sobe em `http://localhost:8080`. As migrations Flyway aplicam-se automaticamente e semeiam
-os 9 países da CPLP (Angola como único `ACTIVE`, com operadoras e valores demo).
+os 9 países da CPLP (Angola como único `ACTIVE`, com operadoras e valores demo). Por omissão liga-se
+a `localhost:5432` com utilizador/password `lusotop` (ver `backend/src/main/resources/application.yml`
+e `.env.example` para apontar para a Neon em produção).
 
 Verificação rápida:
 
