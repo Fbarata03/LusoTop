@@ -13,7 +13,7 @@ Cabo Verde, Guiné-Bissau, Guiné Equatorial, Moçambique, Portugal, São Tomé 
 
 - **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui
 - **Backend**: Spring Boot 3, Java 21, Spring Data JPA, Flyway
-- **Base de dados**: PostgreSQL (Neon em produção; Docker local em desenvolvimento)
+- **Base de dados**: Neon PostgreSQL (projeto `LusoTop`, região `eu-west-2`)
 
 ## Estrutura
 
@@ -30,19 +30,28 @@ LusoTop/
 
 ### 1. Base de dados
 
-Duas opções, à escolha:
+A base de dados oficial é a Neon PostgreSQL (projeto `LusoTop`, `gentle-cherry-31889823`). Defina
+as variáveis de ambiente (nunca no código -- `backend/.env` está no `.gitignore`):
 
-```bash
-docker compose up -d
+```
+DATABASE_URL=jdbc:postgresql://<host>/<db>?sslmode=require
+DATABASE_USERNAME=...
+DATABASE_PASSWORD=...
 ```
 
-ou, se já tiver um PostgreSQL local instalado (qualquer versão recente), basta criar a role e a
-base de dados usadas por omissão pela aplicação:
+A connection string está disponível na Neon Console (Dashboard → Connect) ou via
+`npx neon@latest connection-string --project-id gentle-cherry-31889823`.
+
+Alternativa para desenvolvimento totalmente offline (sem conta Neon): `docker compose up -d` sobe
+um Postgres local, ou reaproveite um Postgres já instalado criando a role/base:
 
 ```sql
 CREATE ROLE lusotop LOGIN PASSWORD 'lusotop';
 CREATE DATABASE lusotop OWNER lusotop;
 ```
+
+Nesse caso `DATABASE_URL` aponta para `jdbc:postgresql://localhost:5432/lusotop` (é o valor por
+omissão em `application.yml` quando não há variáveis de ambiente definidas).
 
 ### 2. Backend (requer Java 21; o Maven Wrapper já está incluído)
 
@@ -52,9 +61,7 @@ cd backend
 ```
 
 A API sobe em `http://localhost:8080`. As migrations Flyway aplicam-se automaticamente e semeiam
-os 9 países da CPLP, todos `ACTIVE`, cada um com operadoras e valores de recarga demo. Por omissão liga-se
-a `localhost:5432` com utilizador/password `lusotop` (ver `backend/src/main/resources/application.yml`
-e `.env.example` para apontar para a Neon em produção).
+os 9 países da CPLP, todos `ACTIVE`, cada um com operadoras e valores de recarga demo.
 
 Verificação rápida:
 
@@ -73,16 +80,6 @@ npm run dev
 
 Abrir `http://localhost:3000`. Por padrão aponta para `NEXT_PUBLIC_API_URL=http://localhost:8080`
 (ver `frontend/.env.local.example`).
-
-## Configuração da base de dados Neon (produção)
-
-Defina as variáveis de ambiente (nunca no código):
-
-```
-DATABASE_URL=jdbc:postgresql://<host>/<db>?sslmode=require
-DATABASE_USERNAME=...
-DATABASE_PASSWORD=...
-```
 
 ## Modo DEMO
 
