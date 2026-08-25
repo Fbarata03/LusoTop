@@ -41,6 +41,8 @@ public class AirtimeProduct {
     @Column(nullable = false)
     private String type;
 
+    private String label;
+
     @Column(nullable = false)
     private boolean active;
 

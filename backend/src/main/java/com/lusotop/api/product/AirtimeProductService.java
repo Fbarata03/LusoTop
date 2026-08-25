@@ -18,6 +18,6 @@ public class AirtimeProductService {
 
     public List<AirtimeProduct> findByOperatorId(Long operatorId) {
         operatorService.findById(operatorId);
-        return productRepository.findAllByOperatorIdAndActiveTrueOrderByAmountAsc(operatorId);
+        return productRepository.findAllByOperatorIdAndActiveTrueOrderByTypeAscAmountAsc(operatorId);
     }
 }

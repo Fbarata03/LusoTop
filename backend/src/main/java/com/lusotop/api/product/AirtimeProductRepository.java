@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface AirtimeProductRepository extends JpaRepository<AirtimeProduct, Long> {
 
-    List<AirtimeProduct> findAllByOperatorIdAndActiveTrueOrderByAmountAsc(Long operatorId);
+    List<AirtimeProduct> findAllByOperatorIdAndActiveTrueOrderByTypeAscAmountAsc(Long operatorId);
 }

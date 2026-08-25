@@ -8,7 +8,8 @@ public record ProductResponse(
         Long id,
         BigDecimal amount,
         String currency,
-        String type
+        String type,
+        String label
 ) {
 
     public static ProductResponse from(AirtimeProduct product) {
@@ -16,7 +17,8 @@ public record ProductResponse(
                 product.getId(),
                 product.getAmount(),
                 product.getCurrency(),
-                product.getType()
+                product.getType(),
+                product.getLabel()
         );
     }
 }
