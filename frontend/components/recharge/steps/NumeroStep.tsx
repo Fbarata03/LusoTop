@@ -1,10 +1,12 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Country } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 export function NumeroStep({
   country,
@@ -18,24 +20,19 @@ export function NumeroStep({
   onBack: () => void;
 }) {
   const [value, setValue] = useState(initialValue);
-  const [error, setError] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
+
+  const parsed = useMemo(
+    () => parsePhoneNumberFromString(value, country.isoCode as CountryCode),
+    [value, country.isoCode]
+  );
+  const isValid = !!parsed?.isValid();
+  const showInvalid = touched && value.trim().length > 0 && !isValid;
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-
-    const parsed = parsePhoneNumberFromString(
-      value,
-      country.isoCode as CountryCode
-    );
-
-    if (!parsed || !parsed.isValid()) {
-      setError(
-        `Número inválido para ${country.name}. Confirme o formato e tente novamente.`
-      );
-      return;
-    }
-
-    setError(null);
+    setTouched(true);
+    if (!isValid || !parsed) return;
     onSubmit(parsed.number);
   }
 
@@ -53,22 +50,54 @@ export function NumeroStep({
         <span className="flex items-center rounded-md border border-border bg-muted px-3 text-sm text-muted-foreground">
           {country.phoneCode}
         </span>
-        <Input
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="912 345 678"
-          inputMode="tel"
-          autoFocus
-        />
+        <div className="relative flex-1">
+          <Input
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value);
+              if (!touched) setTouched(true);
+            }}
+            placeholder="912 345 678"
+            inputMode="tel"
+            autoFocus
+            aria-invalid={showInvalid}
+            className={cn(
+              "pr-9",
+              isValid && "border-primary focus-visible:ring-primary/40",
+              showInvalid && "border-destructive focus-visible:ring-destructive/40"
+            )}
+          />
+          {value.trim().length > 0 && (
+            <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2">
+              {isValid ? (
+                <CheckCircle2 className="size-4 text-primary" />
+              ) : showInvalid ? (
+                <XCircle className="size-4 text-destructive" />
+              ) : null}
+            </span>
+          )}
+        </div>
       </div>
 
-      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+      <p
+        className={cn(
+          "mt-2 min-h-5 text-sm transition-colors",
+          isValid && "text-primary",
+          showInvalid && "text-destructive"
+        )}
+      >
+        {isValid
+          ? "Número válido."
+          : showInvalid
+            ? `Número inválido para ${country.name}. Confirme o formato e tente novamente.`
+            : null}
+      </p>
 
-      <div className="mt-6 flex items-center gap-3">
+      <div className="mt-4 flex items-center gap-3">
         <Button type="button" variant="ghost" onClick={onBack}>
           Voltar
         </Button>
-        <Button type="submit" disabled={value.trim().length === 0}>
+        <Button type="submit" disabled={!isValid}>
           Continuar
         </Button>
       </div>

@@ -43,6 +43,14 @@ const authResultSchema = z.object({
   user: userSchema,
 });
 
+const rateSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  available: z.boolean(),
+  rate: z.number().nullable(),
+});
+export type ExchangeRate = z.infer<typeof rateSchema>;
+
 export class ApiError extends Error {
   constructor(message: string) {
     super(message);
@@ -123,4 +131,11 @@ export function fetchMe(token: string): Promise<User> {
   return request("/api/auth/me", userSchema, {
     headers: { Authorization: `Bearer ${token}` },
   });
+}
+
+export function fetchExchangeRate(from: string, to: string): Promise<ExchangeRate> {
+  return request(
+    `/api/currency/rate?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    rateSchema
+  );
 }

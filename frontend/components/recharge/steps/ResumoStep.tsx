@@ -1,10 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { FlagIcon } from "@/components/ui/flag-icon";
+import { fetchExchangeRate } from "@/lib/api";
 import type { Country, Operator, Product } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+const PAYER_CURRENCIES = ["EUR", "USD", "BRL"] as const;
+type PayerCurrency = (typeof PAYER_CURRENCIES)[number];
 
 export function ResumoStep({
   country,
@@ -21,6 +27,39 @@ export function ResumoStep({
   onBack: () => void;
   onRestart: () => void;
 }) {
+  const [payerCurrency, setPayerCurrency] = useState<PayerCurrency>("EUR");
+  const [rate, setRate] = useState<number | null>(null);
+  const [rateAvailable, setRateAvailable] = useState(true);
+  const [loadingRate, setLoadingRate] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRate() {
+      if (product.currency === payerCurrency) {
+        setRate(1);
+        setRateAvailable(true);
+        return;
+      }
+      setLoadingRate(true);
+      try {
+        const result = await fetchExchangeRate(product.currency, payerCurrency);
+        if (cancelled) return;
+        setRateAvailable(result.available);
+        setRate(result.rate);
+      } catch {
+        if (!cancelled) setRateAvailable(false);
+      } finally {
+        if (!cancelled) setLoadingRate(false);
+      }
+    }
+
+    loadRate();
+    return () => {
+      cancelled = true;
+    };
+  }, [product.currency, payerCurrency]);
+
   return (
     <div>
       <h3 className="flex items-center gap-2 font-heading text-2xl font-bold text-foreground">
@@ -56,7 +95,49 @@ export function ResumoStep({
 
       <Separator className="my-5" />
 
-      <div className="flex gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm text-foreground">
+      <div className="rounded-xl border border-border bg-muted/40 p-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-foreground">Quanto vou pagar?</p>
+          <div className="flex gap-1 rounded-lg bg-muted p-0.5">
+            {PAYER_CURRENCIES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setPayerCurrency(c)}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-xs font-medium transition-all",
+                  payerCurrency === c
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-2">
+          {loadingRate ? (
+            <p className="text-sm text-muted-foreground">A calcular…</p>
+          ) : rateAvailable && rate !== null ? (
+            <p className="font-heading text-2xl font-bold text-foreground">
+              ≈ {(product.amount * rate).toLocaleString("pt-PT", { maximumFractionDigits: 2 })}{" "}
+              <span className="text-base font-normal text-muted-foreground">{payerCurrency}</span>
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Conversão indisponível para {product.currency} → {payerCurrency}. O valor cobrado é
+              sempre em {product.currency}.
+            </p>
+          )}
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Estimativa com taxas de câmbio atuais. O valor final é confirmado antes do pagamento.
+        </p>
+      </div>
+
+      <div className="mt-4 flex gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm text-foreground">
         <Info className="mt-0.5 size-4 shrink-0 text-primary" />
         <p>
           <strong>Modo DEMO.</strong> Esta plataforma ainda está em
