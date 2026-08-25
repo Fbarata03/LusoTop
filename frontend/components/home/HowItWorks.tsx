@@ -6,7 +6,7 @@ const STEPS = [
     icon: Globe,
     title: "Escolha o destino",
     description:
-      "Selecione o país e a operadora do destinatário. Suportamos as principais redes de Angola e, em breve, de todos os países de língua portuguesa.",
+      "Selecione o país e a operadora do destinatário entre os 9 Estados-Membros da CPLP.",
   },
   {
     number: "02",

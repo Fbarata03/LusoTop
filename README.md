@@ -52,7 +52,7 @@ cd backend
 ```
 
 A API sobe em `http://localhost:8080`. As migrations Flyway aplicam-se automaticamente e semeiam
-os 9 países da CPLP (Angola como único `ACTIVE`, com operadoras e valores demo). Por omissão liga-se
+os 9 países da CPLP, todos `ACTIVE`, cada um com operadoras e valores de recarga demo. Por omissão liga-se
 a `localhost:5432` com utilizador/password `lusotop` (ver `backend/src/main/resources/application.yml`
 e `.env.example` para apontar para a Neon em produção).
 
@@ -86,9 +86,10 @@ DATABASE_PASSWORD=...
 
 ## Modo DEMO
 
-Apenas Angola está marcado como `ACTIVE` nesta fase, com operadoras (Unitel, Movicel) e valores de
-recarga claramente identificados como dados de demonstração — não correspondem a uma tabela real de
-nenhum fornecedor. Os restantes 8 países aparecem como "Em breve" até haver integração real.
+Todos os 9 países da CPLP estão `ACTIVE` e têm operadoras e valores de recarga simulados —
+claramente identificados como dados de demonstração e não correspondem a uma tabela real de nenhum
+fornecedor. O wizard de recarga funciona ponta-a-ponta para qualquer país, mas nenhum pagamento ou
+recarga reais são processados até existir integração com um fornecedor real (fases futuras).
 
 ## Documentação
 

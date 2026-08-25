@@ -41,12 +41,14 @@ Migrations Flyway em `backend/src/main/resources/db/migration`. Schema nunca é 
 
 ## Dados seed (DEMO)
 
-Os 9 países da CPLP são inseridos por migration. Apenas **Angola** entra como `ACTIVE`, com duas
-operadoras demo (Unitel, Movicel) e produtos demo (500/1000/2000/5000 AOA). Os outros 8 países
-entram como `COMING_SOON` — sem operadoras associadas — porque não existe integração real com
-nenhum fornecedor de airtime ainda (ver secção 35 da especificação: nunca apresentar "Disponível"
-sem integração real). Isto é ajustado no futuro via administração, quando fornecedores reais forem
-integrados por país.
+Os 9 países da CPLP são inseridos por migration (V4) e entram todos como `ACTIVE` (V9), cada um com
+1-2 operadoras demo — nomes de marcas reais de cada mercado, mas com `provider_code` prefixado
+`DEMO_` (V7) — e produtos demo em moeda local (V8). Isto permite que o wizard de recarga funcione
+ponta-a-ponta para qualquer um dos 9 países. **Nenhum destes dados vem de um fornecedor real de
+airtime ou pagamento** (ver secção 18/35 da especificação: nunca inventar preços/suporte real sem
+integração — por isso este seed é claramente rotulado como simulação em toda a interface, e nenhuma
+recarga ou pagamento reais chegam a ser processados). Quando fornecedores reais forem integrados por
+país (FASE 12), este seed é substituído/complementado via administração.
 
 ## Endpoints (FASE 1)
 

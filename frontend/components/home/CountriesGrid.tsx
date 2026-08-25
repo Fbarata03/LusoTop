@@ -40,8 +40,8 @@ export function CountriesGrid() {
           Países de língua portuguesa
         </h2>
         <p className="mt-4 max-w-xl text-muted-foreground">
-          Começamos por Angola e estamos a expandir progressivamente para
-          cobrir todos os países da comunidade lusófona.
+          Os 9 Estados-Membros da CPLP, todos disponíveis para simulação de
+          recarga já hoje.
         </p>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
