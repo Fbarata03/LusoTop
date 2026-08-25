@@ -86,10 +86,18 @@ DATABASE_PASSWORD=...
 
 ## Modo DEMO
 
-Todos os 9 países da CPLP estão `ACTIVE` e têm operadoras e valores de recarga simulados —
-claramente identificados como dados de demonstração e não correspondem a uma tabela real de nenhum
-fornecedor. O wizard de recarga funciona ponta-a-ponta para qualquer país, mas nenhum pagamento ou
-recarga reais são processados até existir integração com um fornecedor real (fases futuras).
+Todos os 9 países da CPLP estão `ACTIVE` e têm operadoras com planos de Saldo, Dados móveis e Voz
+simulados — claramente identificados como dados de demonstração e não correspondem a uma tabela
+real de nenhum fornecedor. O wizard de recarga funciona ponta-a-ponta para qualquer país, mas
+nenhum pagamento ou recarga reais são processados até existir integração com um fornecedor real
+(fases futuras).
+
+## Autenticação
+
+Ao contrário da recarga, o registo/login **não é demo** — passwords com hash BCrypt, JWT real
+(`POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`), sem depender de nenhum
+fornecedor externo. Defina `JWT_SECRET` em produção (o valor por omissão em `application.yml`
+serve apenas para desenvolvimento local).
 
 ## Documentação
 
