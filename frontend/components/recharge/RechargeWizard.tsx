@@ -33,15 +33,15 @@ export function RechargeWizard() {
   return (
     <Card
       className={cn(
-        "w-full max-w-md overflow-hidden gap-0 rounded-[28px] border-0 bg-white/95 py-0",
-        "shadow-[0_30px_80px_-20px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.06),0_20px_60px_-15px_rgba(52,211,153,0.25)]",
-        "ring-1 ring-white/50 backdrop-blur-xl",
+        "wizard-dark w-full max-w-md overflow-hidden gap-0 rounded-[28px] border-0 bg-background/90 py-0",
+        "shadow-[0_30px_80px_-20px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.08),0_20px_70px_-15px_rgba(52,211,153,0.3)]",
+        "ring-1 ring-white/10 backdrop-blur-xl",
         "before:pointer-events-none before:absolute before:inset-0 before:rounded-[28px]",
-        "before:bg-gradient-to-br before:from-primary/[0.06] before:via-transparent before:to-transparent",
+        "before:bg-gradient-to-br before:from-primary/[0.1] before:via-transparent before:to-transparent",
         "relative"
       )}
     >
-      <div className="relative bg-gradient-to-b from-primary/[0.07] to-transparent">
+      <div className="relative bg-gradient-to-b from-primary/[0.12] to-transparent">
         <StepIndicator current={state.step} />
       </div>
 

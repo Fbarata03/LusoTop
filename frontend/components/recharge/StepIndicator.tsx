@@ -11,7 +11,7 @@ export const WIZARD_STEPS = [
 
 export function StepIndicator({ current }: { current: number }) {
   return (
-    <div className="flex border-b border-black/[0.06] px-1 pt-2">
+    <div className="flex border-b border-border px-1 pt-2">
       {WIZARD_STEPS.map((label, index) => {
         const stepNumber = index + 1;
         const isActive = stepNumber === current;

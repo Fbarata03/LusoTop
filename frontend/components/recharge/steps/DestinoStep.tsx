@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FlagIcon } from "@/components/ui/flag-icon";
 import { EmptySearchIllustration } from "@/components/illustrations/EmptySearchIllustration";
+import { HappyUserIllustration } from "@/components/illustrations/HappyUserIllustration";
 import { fetchCountries, ApiError } from "@/lib/api";
 import type { Country } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -48,13 +49,18 @@ export function DestinoStep({
 
   return (
     <div>
-      <h3 className="flex items-center gap-2 font-heading text-2xl font-bold text-foreground">
-        <span className="h-6 w-1.5 rounded-full bg-primary" />
-        Para onde quer enviar?
-      </h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Escolha o país de destino da recarga.
-      </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="flex items-center gap-2 font-heading text-2xl font-bold text-foreground">
+            <span className="h-6 w-1.5 rounded-full bg-primary" />
+            Para onde quer enviar?
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Escolha o país de destino da recarga.
+          </p>
+        </div>
+        <HappyUserIllustration className="h-16 w-16 shrink-0 -translate-y-1" />
+      </div>
 
       <div className="relative mt-4">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />

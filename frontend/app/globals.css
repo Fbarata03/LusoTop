@@ -125,6 +125,26 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Painel translucido do wizard -- reaproveita os componentes shadcn (que usam
+   tokens semanticos como bg-background/text-foreground/border-border), so que
+   redefinidos para um vidro escuro em vez do branco por omissao. O --primary
+   nao e redefinido aqui, por isso continua o verde da marca. */
+.wizard-dark {
+  --background: oklch(0.18 0.045 255);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.045 255);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.045 255);
+  --popover-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 14%);
+  --input: oklch(1 0 0 / 16%);
+  --muted: oklch(1 0 0 / 7%);
+  --muted-foreground: oklch(0.75 0.02 255);
+  --accent: oklch(0.696 0.17 162.48 / 18%);
+  --accent-foreground: oklch(0.92 0.08 162.48);
+  --ring: oklch(0.696 0.17 162.48);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

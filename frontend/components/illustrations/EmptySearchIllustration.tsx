@@ -7,7 +7,7 @@ export function EmptySearchIllustration({ className }: { className?: string }) {
       role="img"
       aria-label="Ilustração de uma lupa sem resultados"
     >
-      <circle cx="80" cy="60" r="52" fill="#F0FDF9" />
+      <circle cx="80" cy="60" r="52" fill="currentColor" className="text-primary/10" />
       <circle cx="70" cy="55" r="26" stroke="#A7F3D0" strokeWidth="6" />
       <line
         x1="89"
