@@ -5,6 +5,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FlagIcon } from "@/components/ui/flag-icon";
+import { EmptySearchIllustration } from "@/components/illustrations/EmptySearchIllustration";
 import { fetchCountries, ApiError } from "@/lib/api";
 import type { Country } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -116,9 +117,12 @@ export function DestinoStep({
         })}
 
         {countries && filtered.length === 0 && (
-          <p className="col-span-full py-6 text-center text-sm text-muted-foreground">
-            Nenhum país encontrado para &ldquo;{query}&rdquo;.
-          </p>
+          <div className="col-span-full flex flex-col items-center py-4 text-center">
+            <EmptySearchIllustration className="h-20 w-20" />
+            <p className="mt-1 text-sm text-muted-foreground">
+              Nenhum país encontrado para &ldquo;{query}&rdquo;.
+            </p>
+          </div>
         )}
       </div>
     </div>

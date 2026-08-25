@@ -1,4 +1,5 @@
 import { Zap, Lock, Globe2, BadgeCheck, ShieldQuestion, MessageCircle } from "lucide-react";
+import { ConnectionIllustration } from "@/components/illustrations/ConnectionIllustration";
 
 const BENEFITS = [
   {
@@ -44,6 +45,8 @@ export function WhyLusoTop() {
     <section className="bg-background py-24">
       <div className="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-2">
         <div>
+          <ConnectionIllustration className="mb-8 h-auto w-full max-w-sm" />
+
           <p className="text-sm font-semibold tracking-wide text-primary uppercase">
             Porquê LusoTop
           </p>
