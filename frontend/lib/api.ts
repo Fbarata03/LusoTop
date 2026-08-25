@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Country, Operator, Product } from "./types";
+import type { AuthResult, Country, Operator, Product, User } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -27,7 +27,20 @@ const productSchema = z.object({
   id: z.number(),
   amount: z.number(),
   currency: z.string(),
-  type: z.string(),
+  type: z.enum(["AIRTIME", "DATA", "VOICE"]),
+  label: z.string().nullable(),
+});
+
+const userSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  email: z.string(),
+  role: z.enum(["USER", "ADMIN"]),
+});
+
+const authResultSchema = z.object({
+  token: z.string(),
+  user: userSchema,
 });
 
 export class ApiError extends Error {
@@ -37,10 +50,20 @@ export class ApiError extends Error {
   }
 }
 
-async function getJson<T>(path: string, schema: z.ZodType<T>): Promise<T> {
+async function request<T>(
+  path: string,
+  schema: z.ZodType<T>,
+  init?: RequestInit
+): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`${API_URL}${path}`);
+    response = await fetch(`${API_URL}${path}`, {
+      ...init,
+      headers: {
+        ...(init?.body ? { "Content-Type": "application/json" } : {}),
+        ...init?.headers,
+      },
+    });
   } catch {
     throw new ApiError(
       "Não foi possível ligar ao servidor. Verifique se a API está a correr."
@@ -48,7 +71,8 @@ async function getJson<T>(path: string, schema: z.ZodType<T>): Promise<T> {
   }
 
   if (!response.ok) {
-    throw new ApiError(`Erro ao contactar a API (${response.status}).`);
+    const body = await response.json().catch(() => null);
+    throw new ApiError(body?.message ?? `Erro ao contactar a API (${response.status}).`);
   }
 
   const data = await response.json();
@@ -60,19 +84,43 @@ async function getJson<T>(path: string, schema: z.ZodType<T>): Promise<T> {
 }
 
 export function fetchCountries(): Promise<Country[]> {
-  return getJson("/api/countries", z.array(countrySchema));
+  return request("/api/countries", z.array(countrySchema));
 }
 
 export function fetchOperatorsByCountry(isoCode: string): Promise<Operator[]> {
-  return getJson(
+  return request(
     `/api/countries/${encodeURIComponent(isoCode)}/operators`,
     z.array(operatorSchema)
   );
 }
 
 export function fetchProductsByOperator(operatorId: number): Promise<Product[]> {
-  return getJson(
+  return request(
     `/api/operators/${operatorId}/products`,
     z.array(productSchema)
   );
+}
+
+export function registerUser(
+  name: string,
+  email: string,
+  password: string
+): Promise<AuthResult> {
+  return request("/api/auth/register", authResultSchema, {
+    method: "POST",
+    body: JSON.stringify({ name, email, password }),
+  });
+}
+
+export function loginUser(email: string, password: string): Promise<AuthResult> {
+  return request("/api/auth/login", authResultSchema, {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export function fetchMe(token: string): Promise<User> {
+  return request("/api/auth/me", userSchema, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }

@@ -20,9 +20,24 @@ export interface Operator {
   maxAmount: number | null;
 }
 
+export type ProductType = "AIRTIME" | "DATA" | "VOICE";
+
 export interface Product {
   id: number;
   amount: number;
   currency: string;
-  type: string;
+  type: ProductType;
+  label: string | null;
+}
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: "USER" | "ADMIN";
+}
+
+export interface AuthResult {
+  token: string;
+  user: User;
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FlagIcon } from "@/components/ui/flag-icon";
 import { fetchOperatorsByCountry, ApiError } from "@/lib/api";
 import type { Country, Operator } from "@/lib/types";
 
@@ -43,8 +44,9 @@ export function OperadoraStep({
       <h3 className="font-heading text-xl font-semibold text-foreground">
         Qual a operadora?
       </h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {country.flagEmoji} Recarga para {country.name}.
+      <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+        <FlagIcon isoCode={country.isoCode} className="h-4 w-[22px]" />
+        Recarga para {country.name}.
       </p>
 
       {error && (

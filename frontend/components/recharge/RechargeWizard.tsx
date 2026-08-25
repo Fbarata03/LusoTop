@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { StepIndicator } from "./StepIndicator";
 import { DestinoStep } from "./steps/DestinoStep";
 import { OperadoraStep } from "./steps/OperadoraStep";
@@ -30,10 +31,21 @@ export function RechargeWizard() {
   const [state, setState] = useState<WizardState>(INITIAL_STATE);
 
   return (
-    <Card className="w-full max-w-md overflow-hidden py-0 gap-0 shadow-2xl shadow-black/40 ring-1 ring-white/10">
-      <StepIndicator current={state.step} />
+    <Card
+      className={cn(
+        "w-full max-w-md overflow-hidden gap-0 rounded-[28px] border-0 bg-white/95 py-0",
+        "shadow-[0_30px_80px_-20px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.06),0_20px_60px_-15px_rgba(52,211,153,0.25)]",
+        "ring-1 ring-white/50 backdrop-blur-xl",
+        "before:pointer-events-none before:absolute before:inset-0 before:rounded-[28px]",
+        "before:bg-gradient-to-br before:from-primary/[0.06] before:via-transparent before:to-transparent",
+        "relative"
+      )}
+    >
+      <div className="relative bg-gradient-to-b from-primary/[0.07] to-transparent">
+        <StepIndicator current={state.step} />
+      </div>
 
-      <div className="p-6">
+      <div className="relative p-6">
         {state.step === 1 && (
           <DestinoStep
             onSelect={(country) =>

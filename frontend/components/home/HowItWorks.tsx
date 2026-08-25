@@ -18,9 +18,9 @@ const STEPS = [
   {
     number: "03",
     icon: Wallet,
-    title: "Escolha o valor",
+    title: "Escolha o plano",
     description:
-      "Selecione o montante da recarga entre as opções disponíveis para a operadora escolhida. Os valores são sempre transparentes — sem surpresas.",
+      "Saldo, dados móveis ou minutos de voz — selecione o tipo de plano e o valor entre as opções disponíveis. Sempre transparente, sem surpresas.",
   },
   {
     number: "04",

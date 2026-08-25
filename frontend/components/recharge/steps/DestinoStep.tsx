@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FlagIcon } from "@/components/ui/flag-icon";
 import { fetchCountries, ApiError } from "@/lib/api";
 import type { Country } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -92,7 +93,7 @@ export function DestinoStep({
               )}
             >
               <span className="flex items-center gap-3">
-                <span className="text-2xl">{country.flagEmoji}</span>
+                <FlagIcon isoCode={country.isoCode} className="h-6 w-8 shrink-0" />
                 <span>
                   <span className="block text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                     {country.isoCode}

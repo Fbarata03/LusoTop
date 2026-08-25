@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { fetchCountries, ApiError } from "@/lib/api";
 import type { Country } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FlagIcon } from "@/components/ui/flag-icon";
 import { cn } from "@/lib/utils";
 
 export function CountriesGrid() {
@@ -67,7 +68,7 @@ export function CountriesGrid() {
                   country.status === "ACTIVE" ? "bg-primary" : "bg-muted-foreground/30"
                 )}
               />
-              <p className="text-3xl">{country.flagEmoji}</p>
+              <FlagIcon isoCode={country.isoCode} className="h-7 w-10" />
               <p className="mt-3 font-semibold text-foreground">
                 {country.name}
               </p>
