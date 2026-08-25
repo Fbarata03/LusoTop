@@ -1,3 +1,4 @@
+// Deploy: GitHub Pages (frontend, static export) + Render (backend) + Neon (database).
 import type { NextConfig } from "next";
 
 const isGithubPages = process.env.GITHUB_PAGES === "true";
