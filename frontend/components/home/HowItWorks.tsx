@@ -1,30 +1,35 @@
-import { Globe, Smartphone, ShieldCheck, Wallet } from "lucide-react";
+import {
+  DestinationIllustration,
+  PhoneNumberIllustration,
+  PlanIllustration,
+  SecurePaymentIllustration,
+} from "@/components/illustrations/StepIllustrations";
 
 const STEPS = [
   {
     number: "01",
-    icon: Globe,
+    illustration: DestinationIllustration,
     title: "Escolha o destino",
     description:
       "Selecione o país e a operadora do destinatário entre os 9 Estados-Membros da CPLP.",
   },
   {
     number: "02",
-    icon: Smartphone,
+    illustration: PhoneNumberIllustration,
     title: "Introduza o número",
     description:
       "Insira o número de telefone do destinatário. Verificamos o formato automaticamente para garantir que a recarga chega ao destinatário certo.",
   },
   {
     number: "03",
-    icon: Wallet,
+    illustration: PlanIllustration,
     title: "Escolha o plano",
     description:
       "Saldo, dados móveis ou minutos de voz — selecione o tipo de plano e o valor entre as opções disponíveis. Sempre transparente, sem surpresas.",
   },
   {
     number: "04",
-    icon: ShieldCheck,
+    illustration: SecurePaymentIllustration,
     title: "Pagamento seguro",
     description:
       "Pague de forma segura através dos nossos parceiros de pagamento. Os seus dados são protegidos por encriptação de ponta a ponta.",
@@ -51,9 +56,7 @@ export function HowItWorks() {
               <span className="absolute top-4 right-5 font-heading text-4xl font-semibold text-white/10">
                 {step.number}
               </span>
-              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
-                <step.icon className="size-5 text-primary" strokeWidth={1.75} />
-              </span>
+              <step.illustration className="h-16 w-16" />
               <h3 className="mt-4 font-semibold text-white">{step.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-white/60">
                 {step.description}
