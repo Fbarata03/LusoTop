@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Wallet, Wifi, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchProductsByOperator, ApiError } from "@/lib/api";
 import type { Operator, Product, ProductType } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import {
+  GlossyBalanceIcon,
+  GlossyDataIcon,
+  GlossyVoiceIcon,
+} from "@/components/illustrations/GlossyIcons";
 
-const TYPE_TABS: { type: ProductType; label: string; icon: typeof Wallet }[] = [
-  { type: "AIRTIME", label: "Saldo", icon: Wallet },
-  { type: "DATA", label: "Dados", icon: Wifi },
-  { type: "VOICE", label: "Voz", icon: Phone },
+const TYPE_TABS: { type: ProductType; label: string; icon: typeof GlossyBalanceIcon }[] = [
+  { type: "AIRTIME", label: "Saldo", icon: GlossyBalanceIcon },
+  { type: "DATA", label: "Dados", icon: GlossyDataIcon },
+  { type: "VOICE", label: "Voz", icon: GlossyVoiceIcon },
 ];
 
 export function ValorStep({
@@ -100,7 +104,7 @@ export function ValorStep({
                       : !disabled && "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <tab.icon className="size-4" />
+                  <tab.icon className="size-5" />
                   {tab.label}
                 </button>
               );

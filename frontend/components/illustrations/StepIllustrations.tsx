@@ -39,21 +39,62 @@ export function DestinationIllustration({ className }: { className?: string }) {
 
 export function PhoneNumberIllustration({ className }: { className?: string }) {
   return (
-    <Base className={className} label="Ilustração de um telemóvel com teclado numérico">
-      <rect x="26" y="10" width="44" height="76" rx="10" fill="#0F2A44" stroke="#6EE7B7" strokeOpacity="0.4" strokeWidth="1.5" />
-      <rect x="33" y="20" width="30" height="6" rx="3" fill="#34D399" fillOpacity="0.35" />
-      {[0, 1, 2].map((row) =>
-        [0, 1, 2].map((col) => (
-          <circle
-            key={`${row}-${col}`}
-            cx={38 + col * 10}
-            cy={42 + row * 12}
-            r="3.4"
-            fill={row === 2 && col === 1 ? "#34D399" : "#ffffff"}
-            fillOpacity={row === 2 && col === 1 ? 1 : 0.18}
-          />
-        ))
-      )}
+    <Base className={className} label="Ilustração de um telemóvel a validar um número, com sinal">
+      <defs>
+        <filter id="phoneGlow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="2.4" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      {/* Arcos de sinal */}
+      <path d="M68 20a14 14 0 0 1 0 20" stroke="#34D399" strokeOpacity="0.55" strokeWidth="2" strokeLinecap="round" />
+      <path d="M74 14a22 22 0 0 1 0 32" stroke="#34D399" strokeOpacity="0.3" strokeWidth="2" strokeLinecap="round" />
+
+      <rect
+        x="24"
+        y="8"
+        width="40"
+        height="76"
+        rx="10"
+        fill="#0B1B2E"
+        stroke="#34D399"
+        strokeWidth="1.6"
+        filter="url(#phoneGlow)"
+      />
+      <rect x="30" y="17" width="28" height="5" rx="2.5" fill="#34D399" fillOpacity="0.3" />
+
+      {[
+        { y: 30, ok: true },
+        { y: 44, ok: true },
+        { y: 58, ok: false },
+      ].map((row) => (
+        <g key={row.y}>
+          <rect x="30" y={row.y} width="28" height="10" rx="3" fill="#ffffff" fillOpacity="0.06" />
+          <circle cx="36" cy={row.y + 5} r="4.2" fill={row.ok ? "#34D399" : "#F87171"} />
+          {row.ok ? (
+            <path
+              d={`M34 ${row.y + 5}l1.4 1.6L38.2 ${row.y + 3}`}
+              stroke="#052e21"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          ) : (
+            <path
+              d={`M34.3 ${row.y + 3.3}l3.4 3.4M37.7 ${row.y + 3.3}l-3.4 3.4`}
+              stroke="#450a0a"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+            />
+          )}
+          <rect x="43" y={row.y + 3} width="11" height="4" rx="2" fill="#ffffff" fillOpacity="0.15" />
+        </g>
+      ))}
     </Base>
   );
 }
