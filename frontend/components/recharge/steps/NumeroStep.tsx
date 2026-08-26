@@ -53,10 +53,8 @@ export function NumeroStep({
         <div className="relative flex-1">
           <Input
             value={value}
-            onChange={(e) => {
-              setValue(e.target.value);
-              if (!touched) setTouched(true);
-            }}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={() => setTouched(true)}
             placeholder="912 345 678"
             inputMode="tel"
             autoFocus
