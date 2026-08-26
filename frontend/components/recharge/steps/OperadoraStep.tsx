@@ -76,13 +76,16 @@ export function OperadoraStep({
               key={operator.id}
               type="button"
               onClick={() => onSelect(operator)}
-              className="rounded-xl border border-border px-4 py-3 text-left transition-all hover:border-primary hover:bg-primary/5 hover:shadow-sm active:scale-[0.98]"
+              className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 text-left transition-all hover:border-primary hover:bg-primary/5 hover:shadow-sm active:scale-[0.98]"
             >
-              <span className="block font-medium text-foreground">
-                {operator.name}
-              </span>
-              <span className="block text-xs text-muted-foreground">
-                {operator.code}
+              <OperatorLogo name={operator.name} logoUrl={operator.logoUrl} />
+              <span className="min-w-0">
+                <span className="block truncate font-medium text-foreground">
+                  {operator.name}
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  {operator.code}
+                </span>
               </span>
             </button>
           ))}
@@ -93,5 +96,33 @@ export function OperadoraStep({
         Voltar
       </Button>
     </div>
+  );
+}
+
+function OperatorLogo({
+  name,
+  logoUrl,
+}: {
+  name: string;
+  logoUrl: string | null;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (!logoUrl || failed) {
+    return (
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+        {name.charAt(0).toUpperCase()}
+      </span>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={logoUrl}
+      alt={name}
+      className="size-9 shrink-0 rounded-full border border-border bg-white object-contain p-1"
+      onError={() => setFailed(true)}
+    />
   );
 }

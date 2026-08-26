@@ -80,7 +80,25 @@ export function ResumoStep({
             </span>
           }
         />
-        <Row label="Operadora" value={operator.name} />
+        <Row
+          label="Operadora"
+          value={
+            <span className="flex items-center gap-1.5">
+              {operator.logoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={operator.logoUrl}
+                  alt=""
+                  className="size-4 rounded-full border border-border bg-white object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              )}
+              {operator.name}
+            </span>
+          }
+        />
         <Row label="Número" value={phoneNumber} />
         <Row label="Produto" value={PRODUCT_TYPE_LABELS[product.type] ?? "Recarga"} />
         <Row

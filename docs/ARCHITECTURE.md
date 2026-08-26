@@ -39,16 +39,18 @@ airtime_products (id PK, operator_id FK, amount, currency, type, active, created
 Migrations Flyway em `backend/src/main/resources/db/migration`. Schema nunca é criado via `ddl-auto`
 (sempre `validate` em qualquer ambiente) — apenas via migrations versionadas.
 
-## Dados seed (DEMO)
+## Dados seed
 
-Os 9 países da CPLP são inseridos por migration (V4) e entram todos como `ACTIVE` (V9), cada um com
-1-2 operadoras demo — nomes de marcas reais de cada mercado, mas com `provider_code` prefixado
-`DEMO_` (V7) — e produtos demo em moeda local (V8). Isto permite que o wizard de recarga funcione
-ponta-a-ponta para qualquer um dos 9 países. **Nenhum destes dados vem de um fornecedor real de
-airtime ou pagamento** (ver secção 18/35 da especificação: nunca inventar preços/suporte real sem
-integração — por isso este seed é claramente rotulado como simulação em toda a interface, e nenhuma
-recarga ou pagamento reais chegam a ser processados). Quando fornecedores reais forem integrados por
-país (FASE 12), este seed é substituído/complementado via administração.
+Os 9 países da CPLP são inseridos por migration (V4). As operadoras (V13) e os produtos de
+saldo/dados/voz (V14) usam nomes, `provider_code` e `logo_url` reais do catálogo da DingConnect
+(fornecedor de airtime) para os 7 países com cobertura confirmada — Angola, Brasil, Cabo Verde,
+Guiné-Bissau, Moçambique, Portugal e São Tomé e Príncipe. Guiné Equatorial e Timor-Leste não têm
+nenhuma operadora de telecom na DingConnect (apenas um produto genérico de recarga internacional),
+por isso ficam `COMING_SOON` (V13) em vez de anunciar operadoras sem fornecedor. Os valores dos
+produtos continuam ilustrativos — **nenhum pagamento ou recarga reais são processados ainda**
+(ver secção 18/35 da especificação: nunca inventar preços/suporte real sem integração; a interface
+comunica isto como "pré-lançamento"). Quando o pagamento real entrar em produção (FASE 12), passa a
+usar a API da DingConnect para preços e entrega em vez destes valores fixos.
 
 ## Endpoints (FASE 1)
 
