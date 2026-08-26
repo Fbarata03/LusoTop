@@ -140,10 +140,9 @@ export function ResumoStep({
       <div className="mt-4 flex gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm text-foreground">
         <Info className="mt-0.5 size-4 shrink-0 text-primary" />
         <p>
-          <strong>Modo DEMO.</strong> Esta plataforma ainda está em
-          desenvolvimento — nenhum pagamento real será processado e nenhuma
-          recarga será enviada. O fluxo de pagamento entra numa fase
-          posterior.
+          <strong>Pré-lançamento.</strong> Estás a rever o fluxo completo de
+          recarga. O pagamento e o envio real ainda não estão ativos nesta
+          fase, por isso não é cobrado nenhum valor.
         </p>
       </div>
 
@@ -151,7 +150,7 @@ export function ResumoStep({
         <Button variant="ghost" onClick={onBack}>
           Voltar
         </Button>
-        <Button onClick={onRestart}>Fazer outra simulação</Button>
+        <Button onClick={onRestart}>Fazer nova recarga</Button>
       </div>
     </div>
   );

@@ -49,7 +49,7 @@ export default function CriarContaPage() {
             Criar conta
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Acompanha o histórico das tuas simulações de recarga.
+            Acompanha o histórico das tuas recargas.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">

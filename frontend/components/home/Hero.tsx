@@ -34,7 +34,7 @@ export function Hero() {
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <CheckCircle2 className="size-3.5" />
-              Modo DEMO disponível
+              Pré-lançamento — já disponível
             </span>
 
             <h1 className="mt-6 font-heading text-5xl leading-[1.05] font-semibold text-white sm:text-6xl">

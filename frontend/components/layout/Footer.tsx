@@ -50,7 +50,7 @@ export function Footer() {
           <p>© {new Date().getFullYear()} LusoTop. Todos os direitos reservados.</p>
           <p className="flex items-center gap-2">
             <span className="size-1.5 rounded-full bg-primary" />
-            Modo DEMO activo · Plataforma em desenvolvimento
+            Pré-lançamento · Pagamentos reais brevemente
           </p>
         </div>
       </div>

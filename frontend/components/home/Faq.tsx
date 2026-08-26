@@ -1,23 +1,23 @@
 const FAQS = [
   {
-    question: "O que é o Modo DEMO?",
+    question: "Os pagamentos e as recargas já são reais?",
     answer:
-      "A LusoTop está na fase 1 de desenvolvimento. Pode simular o fluxo completo de recarga para os 9 países da CPLP, mas nenhum pagamento ou recarga reais são processados enquanto não houver integração com um fornecedor de pagamento e de airtime.",
+      "A LusoTop está em pré-lançamento. Já podes percorrer o fluxo completo de recarga para os 9 países da CPLP, mas a ligação a fornecedores de pagamento e de airtime ainda está a ser finalizada — por isso nenhum valor é cobrado nem nenhuma recarga é enviada enquanto essa fase não abrir.",
   },
   {
-    question: "Preciso de criar conta para simular uma recarga?",
+    question: "Preciso de criar conta para pedir uma recarga?",
     answer:
-      "Não. O simulador de recarga funciona sem sessão iniciada. A conta serve para, no futuro, guardar o histórico das suas recargas.",
+      "Não. Podes percorrer o fluxo de recarga sem sessão iniciada. A conta serve para guardar o histórico das tuas recargas assim que os pagamentos reais estiverem ativos.",
   },
   {
     question: "Os meus dados de conta estão seguros?",
     answer:
-      "Sim — ao contrário da recarga, o registo e o login não são demo. As passwords são guardadas com hash BCrypt e a sessão usa um token JWT real.",
+      "Sim — o registo e o login já funcionam em produção. As passwords são guardadas com hash BCrypt e a sessão usa um token JWT real.",
   },
   {
     question: "Quando é que os pagamentos reais ficam disponíveis?",
     answer:
-      "A integração com fornecedores de pagamento e de airtime está prevista para uma fase posterior do projeto. Vamos comunicar aqui assim que estiver disponível.",
+      "A integração com fornecedores de pagamento e de airtime está a ser finalizada. Vamos anunciar aqui assim que ficar disponível.",
   },
   {
     question: "Que países estão cobertos?",
