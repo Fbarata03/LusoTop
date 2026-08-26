@@ -1,0 +1,173 @@
+package com.lusotop.api.order;
+
+import com.lusotop.api.common.BadRequestException;
+import com.lusotop.api.common.NotFoundException;
+import com.lusotop.api.country.Country;
+import com.lusotop.api.country.CountryRepository;
+import com.lusotop.api.currency.ExchangeRateService;
+import com.lusotop.api.operator.Operator;
+import com.lusotop.api.operator.OperatorRepository;
+import com.lusotop.api.order.dto.CreateOrderRequest;
+import com.lusotop.api.order.dto.CreateOrderResponse;
+import com.lusotop.api.order.dto.OrderSummaryResponse;
+import com.lusotop.api.product.AirtimeProduct;
+import com.lusotop.api.product.AirtimeProductRepository;
+import com.lusotop.api.user.User;
+import com.stripe.exception.StripeException;
+import com.stripe.model.checkout.Session;
+import com.stripe.param.checkout.SessionCreateParams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+@Service
+public class OrderService {
+
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
+    private final OrderRepository orderRepository;
+    private final CountryRepository countryRepository;
+    private final OperatorRepository operatorRepository;
+    private final AirtimeProductRepository productRepository;
+    private final ExchangeRateService exchangeRateService;
+
+    @Value("${app.stripe.success-url}")
+    private String successUrl;
+
+    @Value("${app.stripe.cancel-url}")
+    private String cancelUrl;
+
+    public OrderService(
+            OrderRepository orderRepository,
+            CountryRepository countryRepository,
+            OperatorRepository operatorRepository,
+            AirtimeProductRepository productRepository,
+            ExchangeRateService exchangeRateService
+    ) {
+        this.orderRepository = orderRepository;
+        this.countryRepository = countryRepository;
+        this.operatorRepository = operatorRepository;
+        this.productRepository = productRepository;
+        this.exchangeRateService = exchangeRateService;
+    }
+
+    public CreateOrderResponse createOrder(CreateOrderRequest request, User user) {
+        Country country = countryRepository.findByIsoCodeIgnoreCase(request.countryIso())
+                .orElseThrow(() -> new NotFoundException("COUNTRY_NOT_FOUND", "País não encontrado."));
+
+        Operator operator = operatorRepository.findById(request.operatorId())
+                .orElseThrow(() -> new NotFoundException("OPERATOR_NOT_FOUND", "Operadora não encontrada."));
+        if (!operator.getCountry().getId().equals(country.getId())) {
+            throw new BadRequestException("OPERATOR_COUNTRY_MISMATCH", "Esta operadora não pertence ao país indicado.");
+        }
+
+        AirtimeProduct product = productRepository.findById(request.productId())
+                .orElseThrow(() -> new NotFoundException("PRODUCT_NOT_FOUND", "Produto não encontrado."));
+        if (!product.getOperator().getId().equals(operator.getId()) || !product.isActive()) {
+            throw new BadRequestException("PRODUCT_OPERATOR_MISMATCH", "Este produto não está disponível para esta operadora.");
+        }
+
+        String payerCurrency = request.payerCurrency().toUpperCase();
+        BigDecimal payerAmount = convert(product.getAmount(), product.getCurrency(), payerCurrency);
+
+        Order order = new Order();
+        order.setUser(user);
+        order.setCountry(country);
+        order.setOperator(operator);
+        order.setProduct(product);
+        order.setPhoneNumber(request.phoneNumber());
+        order.setProductAmount(product.getAmount());
+        order.setProductCurrency(product.getCurrency());
+        order.setPayerAmount(payerAmount);
+        order.setPayerCurrency(payerCurrency);
+        order.setStatus(OrderStatus.PENDING);
+        order = orderRepository.save(order);
+
+        Session session = createCheckoutSession(order, operator, country);
+        order.setStripeCheckoutSessionId(session.getId());
+        orderRepository.save(order);
+
+        return new CreateOrderResponse(order.getId(), session.getUrl());
+    }
+
+    public OrderSummaryResponse confirmOrder(String sessionId) {
+        Order order = orderRepository.findByStripeCheckoutSessionId(sessionId)
+                .orElseThrow(() -> new NotFoundException("ORDER_NOT_FOUND", "Pedido não encontrado."));
+
+        if (order.getStatus() == OrderStatus.PENDING) {
+            try {
+                Session session = Session.retrieve(sessionId);
+                if ("paid".equals(session.getPaymentStatus())) {
+                    order.setStatus(OrderStatus.PAID);
+                    order.setStripePaymentIntentId(session.getPaymentIntent());
+                } else if ("expired".equals(session.getStatus())) {
+                    order.setStatus(OrderStatus.FAILED);
+                }
+                orderRepository.save(order);
+            } catch (StripeException e) {
+                log.error("Stripe session retrieval failed for order {}", order.getId(), e);
+                throw new BadRequestException("STRIPE_ERROR", "Não foi possível confirmar o pagamento junto do Stripe.");
+            }
+        }
+
+        return OrderSummaryResponse.from(order);
+    }
+
+    private Session createCheckoutSession(Order order, Operator operator, Country country) {
+        long unitAmount = order.getPayerAmount()
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(0, RoundingMode.HALF_UP)
+                .longValueExact();
+
+        SessionCreateParams params = SessionCreateParams.builder()
+                .setMode(SessionCreateParams.Mode.PAYMENT)
+                .setSuccessUrl(successUrl)
+                .setCancelUrl(cancelUrl)
+                .setClientReferenceId(String.valueOf(order.getId()))
+                .putMetadata("orderId", String.valueOf(order.getId()))
+                .addLineItem(
+                        SessionCreateParams.LineItem.builder()
+                                .setQuantity(1L)
+                                .setPriceData(
+                                        SessionCreateParams.LineItem.PriceData.builder()
+                                                .setCurrency(order.getPayerCurrency().toLowerCase())
+                                                .setUnitAmount(unitAmount)
+                                                .setProductData(
+                                                        SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                                                .setName("Recarga " + operator.getName() + " — " + country.getName())
+                                                                .setDescription("Para o número " + order.getPhoneNumber())
+                                                                .build()
+                                                )
+                                                .build()
+                                )
+                                .build()
+                )
+                // Managed Payments is on by default on this account and requires a Stripe Tax
+                // product tax code on every line item; we don't use Stripe Tax, so opt out.
+                .putExtraParam("managed_payments[enabled]", false)
+                .build();
+
+        try {
+            return Session.create(params);
+        } catch (StripeException e) {
+            log.error("Stripe checkout session creation failed for order {}", order.getId(), e);
+            throw new BadRequestException("STRIPE_ERROR", "Não foi possível iniciar o pagamento. Tente novamente.");
+        }
+    }
+
+    private BigDecimal convert(BigDecimal amount, String fromCurrency, String toCurrency) {
+        if (fromCurrency.equalsIgnoreCase(toCurrency)) {
+            return amount.setScale(2, RoundingMode.HALF_UP);
+        }
+        return exchangeRateService.getRate(fromCurrency, toCurrency)
+                .map(rate -> amount.multiply(rate).setScale(2, RoundingMode.HALF_UP))
+                .orElseThrow(() -> new BadRequestException(
+                        "EXCHANGE_RATE_UNAVAILABLE",
+                        "Conversão indisponível para " + fromCurrency + " → " + toCurrency + "."
+                ));
+    }
+}

@@ -41,3 +41,19 @@ export interface AuthResult {
   token: string;
   user: User;
 }
+
+export type OrderStatus = "PENDING" | "PAID" | "FAILED" | "CANCELLED";
+
+export interface OrderSummary {
+  id: number;
+  status: OrderStatus;
+  countryName: string;
+  countryIso: string;
+  operatorName: string;
+  operatorLogoUrl: string | null;
+  phoneNumber: string;
+  productAmount: number;
+  productCurrency: string;
+  payerAmount: number;
+  payerCurrency: string;
+}

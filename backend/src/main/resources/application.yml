@@ -29,3 +29,7 @@ app:
   jwt:
     secret: ${JWT_SECRET:lusotop-local-dev-secret-change-me-in-production-please-32chars-min}
     expiration-days: ${JWT_EXPIRATION_DAYS:7}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    success-url: ${STRIPE_SUCCESS_URL:http://localhost:3000/recarga/sucesso?session_id={CHECKOUT_SESSION_ID}}
+    cancel-url: ${STRIPE_CANCEL_URL:http://localhost:3000/recarga/cancelada}

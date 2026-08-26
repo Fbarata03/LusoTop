@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Info } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { FlagIcon } from "@/components/ui/flag-icon";
-import { fetchExchangeRate } from "@/lib/api";
+import { ApiError, createOrder, fetchExchangeRate } from "@/lib/api";
 import type { Country, Operator, Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +31,8 @@ export function ResumoStep({
   const [rate, setRate] = useState<number | null>(null);
   const [rateAvailable, setRateAvailable] = useState(true);
   const [loadingRate, setLoadingRate] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,6 +61,26 @@ export function ResumoStep({
       cancelled = true;
     };
   }, [product.currency, payerCurrency]);
+
+  async function handlePay() {
+    setPayError(null);
+    setPaying(true);
+    try {
+      const { checkoutUrl } = await createOrder({
+        countryIso: country.isoCode,
+        operatorId: operator.id,
+        productId: product.id,
+        phoneNumber,
+        payerCurrency,
+      });
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      setPayError(
+        err instanceof ApiError ? err.message : "Não foi possível iniciar o pagamento."
+      );
+      setPaying(false);
+    }
+  }
 
   return (
     <div>
@@ -158,17 +180,36 @@ export function ResumoStep({
       <div className="mt-4 flex gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm text-foreground">
         <Info className="mt-0.5 size-4 shrink-0 text-primary" />
         <p>
-          <strong>Pré-lançamento.</strong> Estás a rever o fluxo completo de
-          recarga. O pagamento e o envio real ainda não estão ativos nesta
-          fase, por isso não é cobrado nenhum valor.
+          <strong>Pré-lançamento.</strong> O pagamento por cartão já é
+          processado a sério pelo Stripe. O envio automático da recarga para
+          o número ainda está a ser ligado ao fornecedor de airtime — por
+          agora, o pagamento confirma o pedido, mas a entrega é o próximo
+          passo desta fase.
         </p>
       </div>
 
+      {payError && (
+        <p className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+          {payError}
+        </p>
+      )}
+
       <div className="mt-6 flex items-center gap-3">
-        <Button variant="ghost" onClick={onBack}>
+        <Button variant="ghost" onClick={onBack} disabled={paying}>
           Voltar
         </Button>
-        <Button onClick={onRestart}>Fazer nova recarga</Button>
+        <Button onClick={handlePay} disabled={paying}>
+          {paying ? (
+            <>
+              <Loader2 className="size-4 animate-spin" /> A abrir pagamento…
+            </>
+          ) : (
+            "Pagar agora"
+          )}
+        </Button>
+        <Button variant="ghost" onClick={onRestart} disabled={paying}>
+          Recomeçar
+        </Button>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { AuthResult, Country, Operator, Product, User } from "./types";
+import type { AuthResult, Country, Operator, OrderSummary, Product, User } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -50,6 +50,25 @@ const rateSchema = z.object({
   rate: z.number().nullable(),
 });
 export type ExchangeRate = z.infer<typeof rateSchema>;
+
+const createOrderResponseSchema = z.object({
+  orderId: z.number(),
+  checkoutUrl: z.string(),
+});
+
+const orderSummarySchema = z.object({
+  id: z.number(),
+  status: z.enum(["PENDING", "PAID", "FAILED", "CANCELLED"]),
+  countryName: z.string(),
+  countryIso: z.string(),
+  operatorName: z.string(),
+  operatorLogoUrl: z.string().nullable(),
+  phoneNumber: z.string(),
+  productAmount: z.number(),
+  productCurrency: z.string(),
+  payerAmount: z.number(),
+  payerCurrency: z.string(),
+});
 
 export class ApiError extends Error {
   constructor(message: string) {
@@ -137,5 +156,25 @@ export function fetchExchangeRate(from: string, to: string): Promise<ExchangeRat
   return request(
     `/api/currency/rate?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
     rateSchema
+  );
+}
+
+export function createOrder(payload: {
+  countryIso: string;
+  operatorId: number;
+  productId: number;
+  phoneNumber: string;
+  payerCurrency: string;
+}): Promise<{ orderId: number; checkoutUrl: string }> {
+  return request("/api/orders", createOrderResponseSchema, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function confirmOrder(sessionId: string): Promise<OrderSummary> {
+  return request(
+    `/api/orders/session/${encodeURIComponent(sessionId)}`,
+    orderSummarySchema
   );
 }
