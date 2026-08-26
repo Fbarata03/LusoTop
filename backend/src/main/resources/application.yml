@@ -33,3 +33,6 @@ app:
     secret-key: ${STRIPE_SECRET_KEY:}
     success-url: ${STRIPE_SUCCESS_URL:http://localhost:3000/recarga/sucesso?session_id={CHECKOUT_SESSION_ID}}
     cancel-url: ${STRIPE_CANCEL_URL:http://localhost:3000/recarga/cancelada}
+  dingconnect:
+    api-key: ${DINGCONNECT_API_KEY:}
+    base-url: ${DINGCONNECT_BASE_URL:https://api.dingconnect.com}

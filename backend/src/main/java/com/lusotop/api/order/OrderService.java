@@ -5,6 +5,8 @@ import com.lusotop.api.common.NotFoundException;
 import com.lusotop.api.country.Country;
 import com.lusotop.api.country.CountryRepository;
 import com.lusotop.api.currency.ExchangeRateService;
+import com.lusotop.api.delivery.DingConnectService;
+import com.lusotop.api.delivery.DingConnectTransferResult;
 import com.lusotop.api.operator.Operator;
 import com.lusotop.api.operator.OperatorRepository;
 import com.lusotop.api.order.dto.CreateOrderRequest;
@@ -14,7 +16,9 @@ import com.lusotop.api.product.AirtimeProduct;
 import com.lusotop.api.product.AirtimeProductRepository;
 import com.lusotop.api.user.User;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Refund;
 import com.stripe.model.checkout.Session;
+import com.stripe.param.RefundCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +38,7 @@ public class OrderService {
     private final OperatorRepository operatorRepository;
     private final AirtimeProductRepository productRepository;
     private final ExchangeRateService exchangeRateService;
+    private final DingConnectService dingConnectService;
 
     @Value("${app.stripe.success-url}")
     private String successUrl;
@@ -46,13 +51,15 @@ public class OrderService {
             CountryRepository countryRepository,
             OperatorRepository operatorRepository,
             AirtimeProductRepository productRepository,
-            ExchangeRateService exchangeRateService
+            ExchangeRateService exchangeRateService,
+            DingConnectService dingConnectService
     ) {
         this.orderRepository = orderRepository;
         this.countryRepository = countryRepository;
         this.operatorRepository = operatorRepository;
         this.productRepository = productRepository;
         this.exchangeRateService = exchangeRateService;
+        this.dingConnectService = dingConnectService;
     }
 
     public CreateOrderResponse createOrder(CreateOrderRequest request, User user) {

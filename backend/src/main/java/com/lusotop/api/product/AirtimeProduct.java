@@ -50,6 +50,14 @@ public class AirtimeProduct {
     @Column(name = "payer_amount_cents")
     private Integer payerAmountCents;
 
+    /** SKU real da DingConnect para este produto (ver GetProducts). */
+    @Column(name = "dingconnect_sku_code")
+    private String dingconnectSkuCode;
+
+    /** Se true, o SendTransfer usa SendValue = payerAmountCents/100 em vez de um ReceiveValue fixo. */
+    @Column(name = "dingconnect_send_value_range", nullable = false)
+    private boolean dingconnectSendValueRange;
+
     @Column(nullable = false)
     private boolean active;
 

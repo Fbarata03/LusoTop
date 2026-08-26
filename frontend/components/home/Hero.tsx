@@ -15,7 +15,7 @@ export function Hero() {
       className="relative overflow-hidden bg-lusotop-navy"
       style={{
         backgroundImage:
-          "radial-gradient(ellipse 70% 60% at 10% 0%, oklch(0.32 0.1 149 / 55%), transparent 60%), radial-gradient(ellipse 65% 55% at 100% 100%, oklch(0.4 0.13 55 / 50%), transparent 60%)",
+          "radial-gradient(ellipse 70% 60% at 10% 0%, oklch(0.32 0.1 149 / 55%), transparent 60%)",
       }}
     >
       <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">

@@ -76,6 +76,16 @@ public class Order {
     @Column(name = "stripe_payment_intent_id")
     private String stripePaymentIntentId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_status", nullable = false)
+    private DeliveryStatus deliveryStatus;
+
+    @Column(name = "dingconnect_transfer_ref")
+    private String dingconnectTransferRef;
+
+    @Column(name = "delivery_error")
+    private String deliveryError;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -89,6 +99,9 @@ public class Order {
         updatedAt = now;
         if (status == null) {
             status = OrderStatus.PENDING;
+        }
+        if (deliveryStatus == null) {
+            deliveryStatus = DeliveryStatus.PENDING;
         }
     }
 
