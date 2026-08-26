@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/layout/LegalPage";
 
-export const metadata: Metadata = { title: "Termos de Serviço — LusoTop" };
+export const metadata: Metadata = { title: "Termos de Serviço: LusoTop" };
 
 export default function TermosPage() {
   return (
@@ -26,7 +26,7 @@ export default function TermosPage() {
       <p className="mt-3 leading-relaxed">
         O registo, o login e a navegação pela plataforma já funcionam em
         produção. A ligação a fornecedores de pagamento e de airtime está a
-        ser finalizada — enquanto essa fase não abrir, nenhum valor é
+        ser finalizada. Enquanto essa fase não abrir, nenhum valor é
         cobrado e nenhuma recarga real é enviada, mesmo que completes o
         fluxo de recarga até ao fim.
       </p>

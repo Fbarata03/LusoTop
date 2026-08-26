@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/layout/LegalPage";
 
-export const metadata: Metadata = { title: "Privacidade — LusoTop" };
+export const metadata: Metadata = { title: "Privacidade: LusoTop" };
 
 export default function PrivacidadePage() {
   return (
@@ -16,7 +16,7 @@ export default function PrivacidadePage() {
       </h2>
       <p className="mt-3 leading-relaxed">
         Ao criares conta, guardamos o teu nome, email e password (protegida
-        com hash BCrypt — nunca em texto simples). A LusoTop está em
+        com hash BCrypt, nunca em texto simples). A LusoTop está em
         pré-lançamento: enquanto a ligação a fornecedores de pagamento e de
         airtime não estiver ativa, não recolhemos nem processamos nenhum
         dado de pagamento.

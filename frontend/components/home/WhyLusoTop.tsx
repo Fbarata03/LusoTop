@@ -20,7 +20,7 @@ const BENEFITS = [
     icon: Globe2,
     title: "Foco lusófono",
     description:
-      "Construída especificamente para a comunidade de língua portuguesa — em Portugal, Brasil, Angola e além.",
+      "Construída especificamente para a comunidade de língua portuguesa, em Portugal, Brasil, Angola e além.",
     tone: "green",
   },
   {

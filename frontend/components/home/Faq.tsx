@@ -2,7 +2,7 @@ const FAQS = [
   {
     question: "Os pagamentos e as recargas já são reais?",
     answer:
-      "A LusoTop está em pré-lançamento. Já podes percorrer o fluxo completo de recarga para os 7 países da CPLP com operadora disponível, mas a ligação a fornecedores de pagamento e de airtime ainda está a ser finalizada — por isso nenhum valor é cobrado nem nenhuma recarga é enviada enquanto essa fase não abrir.",
+      "A LusoTop está em pré-lançamento. Já podes percorrer o fluxo completo de recarga para os 7 países da CPLP com operadora disponível, mas a ligação ao fornecedor de airtime ainda está a ser finalizada. Por isso, mesmo com o pagamento confirmado, a recarga ainda não é enviada enquanto essa fase não abrir.",
   },
   {
     question: "Preciso de criar conta para pedir uma recarga?",
@@ -12,7 +12,7 @@ const FAQS = [
   {
     question: "Os meus dados de conta estão seguros?",
     answer:
-      "Sim — o registo e o login já funcionam em produção. As passwords são guardadas com hash BCrypt e a sessão usa um token JWT real.",
+      "Sim. O registo e o login já funcionam em produção: as passwords são guardadas com hash BCrypt e a sessão usa um token JWT real.",
   },
   {
     question: "Quando é que os pagamentos reais ficam disponíveis?",

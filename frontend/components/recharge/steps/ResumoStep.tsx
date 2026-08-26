@@ -122,7 +122,7 @@ export function ResumoStep({
           label="Valor"
           value={
             product.label
-              ? `${product.label} — ${product.amount.toLocaleString("pt-PT")} ${product.currency}`
+              ? `${product.label} · ${product.amount.toLocaleString("pt-PT")} ${product.currency}`
               : `${product.amount.toLocaleString("pt-PT")} ${product.currency}`
           }
         />
@@ -161,7 +161,7 @@ export function ResumoStep({
         <p>
           <strong>Pré-lançamento.</strong> O pagamento por cartão já é
           processado a sério pelo Stripe. O envio automático da recarga para
-          o número ainda está a ser ligado ao fornecedor de airtime — por
+          o número ainda está a ser ligado ao fornecedor de airtime. Por
           agora, o pagamento confirma o pedido, mas a entrega é o próximo
           passo desta fase.
         </p>

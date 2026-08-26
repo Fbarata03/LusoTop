@@ -2,129 +2,99 @@
 
 import { useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Line, QuadraticBezierLine } from "@react-three/drei";
 import * as THREE from "three";
 
-const RADIUS = 2.2;
-const HUB_ISO = "PT";
-const LINE_COLOR = "#34d399";
+const GREEN = "#3CB65E";
+const GREEN_BRIGHT = "#8BE04D";
 
-const NODES: { iso: string; lat: number; lon: number }[] = [
-  { iso: "PT", lat: 38.7, lon: -9.1 },
-  { iso: "BR", lat: -15.8, lon: -47.9 },
-  { iso: "AO", lat: -8.8, lon: 13.2 },
-  { iso: "MZ", lat: -25.9, lon: 32.6 },
-  { iso: "CV", lat: 14.9, lon: -23.5 },
-  { iso: "GW", lat: 11.9, lon: -15.6 },
-  { iso: "GQ", lat: 3.75, lon: 8.78 },
-  { iso: "ST", lat: 0.33, lon: 6.73 },
-  { iso: "TL", lat: -8.55, lon: 125.56 },
-];
+/** Uma pequena particula de "sinal" a subir em direcao ao ecra do telemovel, em loop. */
+function SignalParticle({ offset, radius }: { offset: number; radius: number }) {
+  const ref = useRef<THREE.Mesh>(null);
 
-function latLonToVector3(lat: number, lon: number, radius: number) {
-  const phi = (90 - lat) * (Math.PI / 180);
-  const theta = (lon + 180) * (Math.PI / 180);
-  return new THREE.Vector3(
-    -radius * Math.sin(phi) * Math.cos(theta),
-    radius * Math.cos(phi),
-    radius * Math.sin(phi) * Math.sin(theta)
-  );
-}
-
-/** Pontos de um círculo de latitude (paralelo) num dado ângulo polar. */
-function latitudeCircle(phiDeg: number, radius: number, segments = 64) {
-  const phi = (phiDeg * Math.PI) / 180;
-  const r = radius * Math.sin(phi);
-  const y = radius * Math.cos(phi);
-  const points: [number, number, number][] = [];
-  for (let i = 0; i <= segments; i++) {
-    const theta = (i / segments) * Math.PI * 2;
-    points.push([r * Math.cos(theta), y, r * Math.sin(theta)]);
-  }
-  return points;
-}
-
-/** Pontos de um círculo de longitude (meridiano), rodado em torno do eixo Y. */
-function longitudeCircle(thetaDeg: number, radius: number, segments = 64) {
-  const theta = (thetaDeg * Math.PI) / 180;
-  const points: [number, number, number][] = [];
-  for (let i = 0; i <= segments; i++) {
-    const phi = (i / segments) * Math.PI * 2;
-    const x = radius * Math.sin(phi) * Math.cos(theta);
-    const y = radius * Math.cos(phi);
-    const z = radius * Math.sin(phi) * Math.sin(theta);
-    points.push([x, y, z]);
-  }
-  return points;
-}
-
-function GlobeWireframe() {
-  const latitudes = useMemo(
-    () => [-60, -30, 0, 30, 60].map((deg) => latitudeCircle(90 - deg, RADIUS)),
-    []
-  );
-  const longitudes = useMemo(
-    () => [0, 30, 60, 90, 120, 150].map((deg) => longitudeCircle(deg, RADIUS)),
-    []
-  );
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    const t = (clock.getElapsedTime() * 0.35 + offset) % 1;
+    const angle = offset * Math.PI * 2;
+    const spiralRadius = radius * (1 - t) + 0.15;
+    ref.current.position.set(
+      Math.cos(angle + t * 4) * spiralRadius,
+      t * 2.6 - 1.1,
+      Math.sin(angle + t * 4) * spiralRadius
+    );
+    const scale = Math.sin(t * Math.PI);
+    ref.current.scale.setScalar(0.4 + scale * 0.9);
+    const material = ref.current.material as THREE.MeshBasicMaterial;
+    material.opacity = 0.15 + scale * 0.85;
+  });
 
   return (
-    <>
-      {latitudes.map((pts, i) => (
-        <Line key={`lat-${i}`} points={pts} color={LINE_COLOR} transparent opacity={0.14} lineWidth={1} />
-      ))}
-      {longitudes.map((pts, i) => (
-        <Line key={`lon-${i}`} points={pts} color={LINE_COLOR} transparent opacity={0.14} lineWidth={1} />
-      ))}
-    </>
+    <mesh ref={ref}>
+      <sphereGeometry args={[0.05, 8, 8]} />
+      <meshBasicMaterial color={GREEN_BRIGHT} transparent opacity={0.8} />
+    </mesh>
+  );
+}
+
+function PhoneMockup() {
+  const group = useRef<THREE.Group>(null);
+  const screenMaterial = useRef<THREE.MeshStandardMaterial>(null);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    if (group.current) {
+      group.current.position.y = Math.sin(t * 0.7) * 0.12;
+      group.current.rotation.y = Math.sin(t * 0.25) * 0.35;
+      group.current.rotation.x = Math.cos(t * 0.2) * 0.05;
+    }
+    if (screenMaterial.current) {
+      screenMaterial.current.emissiveIntensity = 0.7 + Math.sin(t * 1.6) * 0.25;
+    }
+  });
+
+  return (
+    <group ref={group} rotation={[0.05, -0.4, 0]}>
+      {/* Corpo do telemovel */}
+      <mesh>
+        <boxGeometry args={[1.15, 2.3, 0.12]} />
+        <meshStandardMaterial color="#0B1B14" roughness={0.35} metalness={0.4} />
+      </mesh>
+      {/* Ecra */}
+      <mesh position={[0, 0, 0.07]}>
+        <planeGeometry args={[0.98, 2.05]} />
+        <meshStandardMaterial
+          ref={screenMaterial}
+          color={GREEN}
+          emissive={GREEN}
+          emissiveIntensity={0.7}
+          roughness={0.5}
+        />
+      </mesh>
+      {/* Marca de saldo no ecra */}
+      <mesh position={[0, 0.05, 0.075]}>
+        <ringGeometry args={[0.22, 0.3, 32]} />
+        <meshBasicMaterial color="#F5FBF7" transparent opacity={0.9} />
+      </mesh>
+    </group>
   );
 }
 
 function Scene() {
-  const group = useRef<THREE.Group>(null);
-
-  const points = useMemo(
-    () => NODES.map((n) => ({ ...n, position: latLonToVector3(n.lat, n.lon, RADIUS) })),
+  const particles = useMemo(
+    () => Array.from({ length: 12 }, (_, i) => ({ offset: i / 12, radius: 0.55 + (i % 3) * 0.2 })),
     []
   );
-  const hub = points.find((p) => p.iso === HUB_ISO)!;
-
-  useFrame((_, delta) => {
-    if (group.current) group.current.rotation.y += delta * 0.06;
-  });
 
   return (
-    <group ref={group} rotation={[0.25, 0.5, 0]}>
-      <GlobeWireframe />
+    <group scale={0.72}>
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[2, 3, 4]} intensity={1.1} color="#ffffff" />
+      <pointLight position={[-2, -1, 2]} intensity={0.6} color={GREEN_BRIGHT} />
 
-      {points.map((p) => (
-        <mesh key={p.iso} position={p.position}>
-          <sphereGeometry args={[0.045, 12, 12]} />
-          <meshBasicMaterial color="#6ee7b7" />
-        </mesh>
+      <PhoneMockup />
+
+      {particles.map((p, i) => (
+        <SignalParticle key={i} offset={p.offset} radius={p.radius} />
       ))}
-
-      {points
-        .filter((p) => p.iso !== HUB_ISO)
-        .map((p) => {
-          const mid = hub.position
-            .clone()
-            .add(p.position)
-            .normalize()
-            .multiplyScalar(RADIUS * 1.3);
-          return (
-            <QuadraticBezierLine
-              key={p.iso}
-              start={hub.position.toArray()}
-              end={p.position.toArray()}
-              mid={mid.toArray()}
-              color={LINE_COLOR}
-              lineWidth={1.25}
-              transparent
-              opacity={0.4}
-            />
-          );
-        })}
     </group>
   );
 }
@@ -133,7 +103,7 @@ export function Globe3D() {
   return (
     <Canvas
       dpr={[1, 1.5]}
-      camera={{ position: [0, 0, 5.6], fov: 42 }}
+      camera={{ position: [0, 0, 5.2], fov: 40 }}
       gl={{ alpha: true, antialias: true }}
       style={{ pointerEvents: "none" }}
     >

@@ -25,7 +25,7 @@ const STEPS = [
     illustration: PlanIllustration,
     title: "Escolha o plano",
     description:
-      "Saldo, dados móveis ou minutos de voz — selecione o tipo de plano e o valor entre as opções disponíveis. Sempre transparente, sem surpresas.",
+      "Saldo, dados móveis ou minutos de voz: selecione o tipo de plano e o valor entre as opções disponíveis. Sempre transparente, sem surpresas.",
   },
   {
     number: "04",
