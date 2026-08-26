@@ -71,7 +71,8 @@ public class OrderService {
             throw new BadRequestException("PRODUCT_OPERATOR_MISMATCH", "Este produto não está disponível para esta operadora.");
         }
 
-        String payerCurrency = request.payerCurrency().toUpperCase();
+        // Todo o pagamento e sempre em EUR -- a moeda do pagador nao e configuravel.
+        String payerCurrency = "EUR";
         BigDecimal payerAmount = convert(product.getAmount(), product.getCurrency(), payerCurrency);
 
         Order order = new Order();

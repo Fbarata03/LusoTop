@@ -5,12 +5,9 @@ import { Info, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { FlagIcon } from "@/components/ui/flag-icon";
+import { OperatorLogo } from "@/components/ui/operator-logo";
 import { ApiError, createOrder, fetchExchangeRate } from "@/lib/api";
 import type { Country, Operator, Product } from "@/lib/types";
-import { cn } from "@/lib/utils";
-
-const PAYER_CURRENCIES = ["EUR", "USD", "BRL"] as const;
-type PayerCurrency = (typeof PAYER_CURRENCIES)[number];
 
 export function ResumoStep({
   country,
@@ -27,10 +24,9 @@ export function ResumoStep({
   onBack: () => void;
   onRestart: () => void;
 }) {
-  const [payerCurrency, setPayerCurrency] = useState<PayerCurrency>("EUR");
   const [rate, setRate] = useState<number | null>(null);
   const [rateAvailable, setRateAvailable] = useState(true);
-  const [loadingRate, setLoadingRate] = useState(false);
+  const [loadingRate, setLoadingRate] = useState(true);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
 
@@ -38,14 +34,15 @@ export function ResumoStep({
     let cancelled = false;
 
     async function loadRate() {
-      if (product.currency === payerCurrency) {
+      if (product.currency === "EUR") {
         setRate(1);
         setRateAvailable(true);
+        setLoadingRate(false);
         return;
       }
       setLoadingRate(true);
       try {
-        const result = await fetchExchangeRate(product.currency, payerCurrency);
+        const result = await fetchExchangeRate(product.currency, "EUR");
         if (cancelled) return;
         setRateAvailable(result.available);
         setRate(result.rate);
@@ -60,7 +57,7 @@ export function ResumoStep({
     return () => {
       cancelled = true;
     };
-  }, [product.currency, payerCurrency]);
+  }, [product.currency]);
 
   async function handlePay() {
     setPayError(null);
@@ -71,7 +68,6 @@ export function ResumoStep({
         operatorId: operator.id,
         productId: product.id,
         phoneNumber,
-        payerCurrency: rateAvailable ? payerCurrency : product.currency,
       });
       window.location.href = checkoutUrl;
     } catch (err) {
@@ -106,17 +102,11 @@ export function ResumoStep({
           label="Operadora"
           value={
             <span className="flex items-center gap-1.5">
-              {operator.logoUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={operator.logoUrl}
-                  alt=""
-                  className="size-4 rounded-full border border-border bg-white object-contain"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-              )}
+              <OperatorLogo
+                name={operator.name}
+                logoUrl={operator.logoUrl}
+                className="size-4 text-[10px]"
+              />
               {operator.name}
             </span>
           }
@@ -136,26 +126,7 @@ export function ResumoStep({
       <Separator className="my-5" />
 
       <div className="rounded-xl border border-border bg-muted/40 p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-foreground">Quanto vou pagar?</p>
-          <div className="flex gap-1 rounded-lg bg-muted p-0.5">
-            {PAYER_CURRENCIES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setPayerCurrency(c)}
-                className={cn(
-                  "rounded-md px-2.5 py-1 text-xs font-medium transition-all",
-                  payerCurrency === c
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        </div>
+        <p className="text-sm font-medium text-foreground">Quanto vou pagar?</p>
 
         <div className="mt-2">
           {loadingRate ? (
@@ -163,12 +134,12 @@ export function ResumoStep({
           ) : rateAvailable && rate !== null ? (
             <p className="font-heading text-2xl font-bold text-foreground">
               ≈ {(product.amount * rate).toLocaleString("pt-PT", { maximumFractionDigits: 2 })}{" "}
-              <span className="text-base font-normal text-muted-foreground">{payerCurrency}</span>
+              <span className="text-base font-normal text-muted-foreground">EUR</span>
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Conversão indisponível para {product.currency} → {payerCurrency}. O valor cobrado é
-              sempre em {product.currency}.
+            <p className="text-sm text-destructive">
+              Conversão indisponível para {product.currency} → EUR neste momento. Tenta
+              novamente daqui a pouco.
             </p>
           )}
         </div>
@@ -198,7 +169,7 @@ export function ResumoStep({
         <Button variant="ghost" onClick={onBack} disabled={paying}>
           Voltar
         </Button>
-        <Button onClick={handlePay} disabled={paying}>
+        <Button onClick={handlePay} disabled={paying || loadingRate || !rateAvailable}>
           {paying ? (
             <>
               <Loader2 className="size-4 animate-spin" /> A abrir pagamento…

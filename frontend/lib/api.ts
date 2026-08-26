@@ -164,7 +164,6 @@ export function createOrder(payload: {
   operatorId: number;
   productId: number;
   phoneNumber: string;
-  payerCurrency: string;
 }): Promise<{ orderId: number; checkoutUrl: string }> {
   return request("/api/orders", createOrderResponseSchema, {
     method: "POST",

@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchProductsByOperator, ApiError } from "@/lib/api";
 import type { Operator, Product, ProductType } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { OperatorLogo } from "@/components/ui/operator-logo";
 import {
   GlossyBalanceIcon,
   GlossyDataIcon,
@@ -67,7 +68,8 @@ export function ValorStep({
         <span className="h-6 w-1.5 rounded-full bg-primary" />
         O que quer enviar?
       </h3>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+        <OperatorLogo name={operator.name} logoUrl={operator.logoUrl} className="size-4 text-[10px]" />
         Escolha o tipo de plano e o valor para {operator.name}.
       </p>
 

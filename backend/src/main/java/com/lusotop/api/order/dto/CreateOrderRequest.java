@@ -7,7 +7,6 @@ public record CreateOrderRequest(
         @NotBlank String countryIso,
         @NotNull Long operatorId,
         @NotNull Long productId,
-        @NotBlank String phoneNumber,
-        @NotBlank String payerCurrency
+        @NotBlank String phoneNumber
 ) {
 }

@@ -7,18 +7,19 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 /**
- * Conversao entre as moedas dos 9 paises da CPLP e as moedas mais comuns de
- * quem paga (EUR/USD/BRL). Nunca inventa taxas:
- * - EUR/USD/BRL: taxas reais ao vivo via Frankfurter (dados do BCE, sem API key).
- * - XOF/XAF/CVE: paridades fixas oficiais (nao mudam, fixadas por tratado/acordo,
- *   nao sao uma estimativa).
- * - AOA/MZN/STN: sem fonte gratuita fiavel -> conversao fica indisponivel em vez
- *   de mostrar um numero inventado.
+ * Conversao entre as moedas dos paises da CPLP e o EUR (unica moeda de pagamento).
+ * Nunca inventa taxas:
+ * - EUR: identidade.
+ * - XOF/XAF/CVE/STN: paridades fixas oficiais (fixadas por tratado/acordo com a
+ *   zona euro, nao sao uma estimativa).
+ * - BRL/AOA/MZN: taxas reais ao vivo (BRL via Frankfurter/BCE, AOA/MZN via
+ *   exchangerate-api.com, que a Frankfurter nao cobre).
  */
 @Service
 public class ExchangeRateService {
@@ -26,18 +27,22 @@ public class ExchangeRateService {
     private static final Map<String, BigDecimal> EUR_PEGS = Map.of(
             "XOF", new BigDecimal("655.957"),
             "XAF", new BigDecimal("655.957"),
-            "CVE", new BigDecimal("110.265")
+            "CVE", new BigDecimal("110.265"),
+            "STN", new BigDecimal("24.5")
     );
 
-    private static final Set<String> LIVE_CURRENCIES = Set.of("USD", "BRL");
+    private static final Set<String> FRANKFURTER_CURRENCIES = Set.of("BRL");
+    private static final Set<String> OPEN_ER_API_CURRENCIES = Set.of("AOA", "MZN");
     private static final Duration CACHE_TTL = Duration.ofHours(1);
 
-    private final RestClient restClient;
+    private final RestClient frankfurterClient;
+    private final RestClient openErApiClient;
     private volatile Map<String, BigDecimal> liveRatesCache = Map.of();
     private volatile Instant cacheTimestamp = Instant.EPOCH;
 
-    public ExchangeRateService(RestClient.Builder builder) {
-        this.restClient = builder.baseUrl("https://api.frankfurter.app").build();
+    public ExchangeRateService() {
+        this.frankfurterClient = RestClient.builder().baseUrl("https://api.frankfurter.app").build();
+        this.openErApiClient = RestClient.builder().baseUrl("https://open.er-api.com/v6").build();
     }
 
     public Optional<BigDecimal> getRate(String fromRaw, String toRaw) {
@@ -66,12 +71,9 @@ public class ExchangeRateService {
         if (EUR_PEGS.containsKey(currency)) {
             return Optional.of(BigDecimal.ONE.divide(EUR_PEGS.get(currency), 10, RoundingMode.HALF_UP));
         }
-        if (LIVE_CURRENCIES.contains(currency)) {
-            BigDecimal eurToCurrency = liveRates().get(currency);
-            if (eurToCurrency == null) return Optional.empty();
-            return Optional.of(BigDecimal.ONE.divide(eurToCurrency, 10, RoundingMode.HALF_UP));
-        }
-        return Optional.empty();
+        BigDecimal eurToCurrency = liveRates().get(currency);
+        if (eurToCurrency == null) return Optional.empty();
+        return Optional.of(BigDecimal.ONE.divide(eurToCurrency, 10, RoundingMode.HALF_UP));
     }
 
     /** Quantas unidades da moeda dada vale 1 EUR. */
@@ -82,10 +84,7 @@ public class ExchangeRateService {
         if (EUR_PEGS.containsKey(currency)) {
             return Optional.of(EUR_PEGS.get(currency));
         }
-        if (LIVE_CURRENCIES.contains(currency)) {
-            return Optional.ofNullable(liveRates().get(currency));
-        }
-        return Optional.empty();
+        return Optional.ofNullable(liveRates().get(currency));
     }
 
     private synchronized Map<String, BigDecimal> liveRates() {
@@ -93,21 +92,51 @@ public class ExchangeRateService {
                 && !liveRatesCache.isEmpty()) {
             return liveRatesCache;
         }
+
+        Map<String, BigDecimal> merged = new HashMap<>(liveRatesCache);
+        boolean updated = false;
+
         try {
-            FrankfurterResponse response = restClient.get()
-                    .uri("/latest?from=EUR&to=USD,BRL")
+            FrankfurterResponse response = frankfurterClient.get()
+                    .uri("/latest?from=EUR&to=" + String.join(",", FRANKFURTER_CURRENCIES))
                     .retrieve()
                     .body(FrankfurterResponse.class);
             if (response != null && response.rates() != null) {
-                liveRatesCache = response.rates();
-                cacheTimestamp = Instant.now();
+                merged.putAll(response.rates());
+                updated = true;
             }
         } catch (Exception e) {
-            // Mantem a cache anterior (ou vazia) em caso de falha de rede -- nunca inventa uma taxa.
+            // Mantem a taxa anterior desta fonte (ou indisponivel) em caso de falha -- nunca inventa.
+        }
+
+        try {
+            OpenErApiResponse response = openErApiClient.get()
+                    .uri("/latest/EUR")
+                    .retrieve()
+                    .body(OpenErApiResponse.class);
+            if (response != null && "success".equals(response.result()) && response.rates() != null) {
+                for (String currency : OPEN_ER_API_CURRENCIES) {
+                    BigDecimal rate = response.rates().get(currency);
+                    if (rate != null) {
+                        merged.put(currency, rate);
+                        updated = true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Mantem a taxa anterior desta fonte (ou indisponivel) em caso de falha -- nunca inventa.
+        }
+
+        if (updated) {
+            liveRatesCache = Map.copyOf(merged);
+            cacheTimestamp = Instant.now();
         }
         return liveRatesCache;
     }
 
     private record FrankfurterResponse(String base, String date, Map<String, BigDecimal> rates) {
+    }
+
+    private record OpenErApiResponse(String result, Map<String, BigDecimal> rates) {
     }
 }

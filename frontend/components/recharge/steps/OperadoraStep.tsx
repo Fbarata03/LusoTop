@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FlagIcon } from "@/components/ui/flag-icon";
+import { OperatorLogo } from "@/components/ui/operator-logo";
 import { fetchOperatorsByCountry, ApiError } from "@/lib/api";
 import type { Country, Operator } from "@/lib/types";
 
@@ -78,7 +79,7 @@ export function OperadoraStep({
               onClick={() => onSelect(operator)}
               className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 text-left transition-all hover:border-primary hover:bg-primary/5 hover:shadow-sm active:scale-[0.98]"
             >
-              <OperatorLogo name={operator.name} logoUrl={operator.logoUrl} />
+              <OperatorLogo name={operator.name} logoUrl={operator.logoUrl} className="size-9 text-sm" />
               <span className="min-w-0">
                 <span className="block truncate font-medium text-foreground">
                   {operator.name}
@@ -96,33 +97,5 @@ export function OperadoraStep({
         Voltar
       </Button>
     </div>
-  );
-}
-
-function OperatorLogo({
-  name,
-  logoUrl,
-}: {
-  name: string;
-  logoUrl: string | null;
-}) {
-  const [failed, setFailed] = useState(false);
-
-  if (!logoUrl || failed) {
-    return (
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-        {name.charAt(0).toUpperCase()}
-      </span>
-    );
-  }
-
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={logoUrl}
-      alt={name}
-      className="size-9 shrink-0 rounded-full border border-border bg-white object-contain p-1"
-      onError={() => setFailed(true)}
-    />
   );
 }
