@@ -4,6 +4,7 @@ import {
   PlanIllustration,
   SecurePaymentIllustration,
 } from "@/components/illustrations/StepIllustrations";
+import { cn } from "@/lib/utils";
 
 const STEPS = [
   {
@@ -48,21 +49,46 @@ export function HowItWorks() {
         </h2>
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((step) => (
-            <div
-              key={step.number}
-              className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-white/[0.07]"
-            >
-              <span className="absolute top-4 right-5 font-heading text-4xl font-semibold text-white/10">
-                {step.number}
-              </span>
-              <step.illustration className="h-16 w-16" />
-              <h3 className="mt-4 font-semibold text-white">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/60">
-                {step.description}
-              </p>
-            </div>
-          ))}
+          {STEPS.map((step, i) => {
+            const highlighted = i === 1;
+            return (
+              <div
+                key={step.number}
+                className={cn(
+                  "relative overflow-hidden rounded-2xl border p-6 transition-all hover:-translate-y-0.5",
+                  highlighted
+                    ? "border-primary bg-primary text-lusotop-navy shadow-[0_20px_50px_-15px_rgba(52,211,153,0.45)] hover:bg-primary/90"
+                    : "border-white/10 bg-white/5 hover:border-primary/30 hover:bg-white/[0.07]"
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-4 right-5 font-heading text-4xl font-semibold",
+                    highlighted ? "text-lusotop-navy/15" : "text-white/10"
+                  )}
+                >
+                  {step.number}
+                </span>
+                <step.illustration className="h-16 w-16" />
+                <h3
+                  className={cn(
+                    "mt-4 font-semibold",
+                    highlighted ? "text-lusotop-navy" : "text-white"
+                  )}
+                >
+                  {step.title}
+                </h3>
+                <p
+                  className={cn(
+                    "mt-2 text-sm leading-relaxed",
+                    highlighted ? "text-lusotop-navy/70" : "text-white/60"
+                  )}
+                >
+                  {step.description}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

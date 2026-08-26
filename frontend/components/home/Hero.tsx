@@ -19,6 +19,17 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden bg-lusotop-navy">
       <div
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
+          maskImage: "radial-gradient(ellipse 80% 60% at 30% 20%, black 40%, transparent 80%)",
+          WebkitMaskImage: "radial-gradient(ellipse 80% 60% at 30% 20%, black 40%, transparent 80%)",
+        }}
+        aria-hidden="true"
+      />
+      <div
         className="pointer-events-none absolute top-1/2 right-[-14%] hidden h-[560px] w-[560px] -translate-y-1/2 opacity-80 md:block lg:right-[-4%]"
         style={{
           maskImage: "radial-gradient(circle, black 55%, transparent 78%)",
