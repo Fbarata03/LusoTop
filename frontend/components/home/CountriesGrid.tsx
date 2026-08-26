@@ -56,53 +56,31 @@ export function CountriesGrid() {
               <Skeleton key={i} className="h-28 rounded-2xl" />
             ))}
 
-          {countries?.map((country, i) => {
-            const highlighted = i === 0 && country.status === "ACTIVE";
-            return (
-              <div
-                key={country.isoCode}
+          {countries?.map((country) => (
+            <div
+              key={country.isoCode}
+              className="relative rounded-2xl border border-border bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+            >
+              <span
                 className={cn(
-                  "relative rounded-2xl border p-5 shadow-sm transition-all hover:-translate-y-0.5",
-                  highlighted
-                    ? "border-primary bg-primary text-lusotop-navy shadow-[0_18px_40px_-18px_rgba(52,211,153,0.5)] hover:shadow-[0_22px_46px_-16px_rgba(52,211,153,0.55)]"
-                    : "border-border bg-white hover:border-primary/40 hover:shadow-md"
+                  "absolute top-5 right-5 size-2 rounded-full",
+                  country.status === "ACTIVE" ? "bg-primary" : "bg-muted-foreground/30"
                 )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-5 right-5 size-2 rounded-full",
-                    country.status !== "ACTIVE"
-                      ? "bg-muted-foreground/30"
-                      : highlighted
-                        ? "bg-lusotop-navy/40"
-                        : "bg-primary"
-                  )}
-                />
-                <FlagIcon isoCode={country.isoCode} className="h-7 w-10 shadow-sm" />
-                <p
-                  className={cn(
-                    "mt-3 font-semibold",
-                    highlighted ? "text-lusotop-navy" : "text-foreground"
-                  )}
-                >
-                  {country.name}
+              />
+              <FlagIcon isoCode={country.isoCode} className="h-7 w-10" />
+              <p className="mt-3 font-semibold text-foreground">
+                {country.name}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {country.currencyCode} · {country.phoneCode}
+              </p>
+              {country.status !== "ACTIVE" && (
+                <p className="mt-2 text-xs font-medium text-muted-foreground">
+                  Em breve
                 </p>
-                <p
-                  className={cn(
-                    "text-sm",
-                    highlighted ? "text-lusotop-navy/70" : "text-muted-foreground"
-                  )}
-                >
-                  {country.currencyCode} · {country.phoneCode}
-                </p>
-                {country.status !== "ACTIVE" && (
-                  <p className="mt-2 text-xs font-medium text-muted-foreground">
-                    Em breve
-                  </p>
-                )}
-              </div>
-            );
-          })}
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </section>

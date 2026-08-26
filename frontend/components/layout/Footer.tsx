@@ -2,9 +2,9 @@ import Link from "next/link";
 import { CPLP_COUNTRIES } from "@/lib/cplp-countries";
 
 const PLATFORM_LINKS = [
-  { href: "#como-funciona", label: "Como funciona" },
-  { href: "#paises", label: "Países disponíveis" },
-  { href: "#ajuda", label: "Ajuda / FAQ" },
+  { href: "/#como-funciona", label: "Como funciona" },
+  { href: "/#paises", label: "Países disponíveis" },
+  { href: "/#ajuda", label: "Ajuda / FAQ" },
   { href: "/criar-conta", label: "Criar conta" },
 ];
 

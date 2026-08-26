@@ -9,9 +9,9 @@ import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { href: "#como-funciona", label: "Como funciona" },
-  { href: "#paises", label: "Países" },
-  { href: "#ajuda", label: "Ajuda" },
+  { href: "/#como-funciona", label: "Como funciona" },
+  { href: "/#paises", label: "Países" },
+  { href: "/#ajuda", label: "Ajuda" },
 ];
 
 export function Header() {

@@ -1,5 +1,5 @@
 import { Zap, Lock, Globe2, BadgeCheck, ShieldQuestion, MessageCircle } from "lucide-react";
-import { ConnectionIllustration } from "@/components/illustrations/ConnectionIllustration";
+import { cn } from "@/lib/utils";
 
 const BENEFITS = [
   {
@@ -7,45 +7,65 @@ const BENEFITS = [
     title: "Entrega rápida",
     description:
       "A recarga é processada instantaneamente após a confirmação do pagamento.",
+    tone: "green",
   },
   {
     icon: Lock,
     title: "Pagamentos seguros",
     description:
       "Os seus dados financeiros são processados por provedores certificados. Nunca armazenamos dados de cartão.",
+    tone: "amber",
   },
   {
     icon: Globe2,
     title: "Foco lusófono",
     description:
       "Construída especificamente para a comunidade de língua portuguesa — em Portugal, Brasil, Angola e além.",
+    tone: "green",
   },
   {
     icon: BadgeCheck,
     title: "Confirmação garantida",
     description:
       "Recebe um comprovativo por email para cada recarga. Rastreie o estado de todas as suas transações.",
+    tone: "amber",
   },
   {
     icon: ShieldQuestion,
     title: "Transparência total",
     description:
       "As taxas são mostradas antes do pagamento. Sem custos ocultos, sem surpresas.",
+    tone: "green",
   },
   {
     icon: MessageCircle,
     title: "Suporte dedicado",
     description:
       "A nossa equipa fala português e está disponível para ajudar em qualquer dificuldade.",
+    tone: "amber",
   },
-];
+] as const;
 
 export function WhyLusoTop() {
   return (
     <section className="bg-background py-24">
       <div className="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-2">
         <div>
-          <ConnectionIllustration className="mb-8 h-auto w-full max-w-sm" />
+          <div className="relative mb-10 h-72 w-full max-w-sm">
+            <div className="absolute inset-0 rounded-[2.5rem] bg-primary/15" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/hero-phone-2.jpg"
+              alt="Utilizadora sorridente a usar o telemóvel"
+              className="absolute top-0 left-0 h-56 w-44 rounded-3xl border-4 border-background object-cover shadow-lg"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/hero-phone-1.jpg"
+              alt="Pessoa a enviar uma recarga pelo telemóvel"
+              className="absolute right-0 bottom-0 h-52 w-40 rounded-3xl border-4 border-background object-cover shadow-lg"
+            />
+          </div>
 
           <p className="text-sm font-semibold tracking-wide text-primary uppercase">
             Porquê LusoTop
@@ -74,8 +94,21 @@ export function WhyLusoTop() {
         <div className="grid gap-6 sm:grid-cols-2">
           {BENEFITS.map((benefit) => (
             <div key={benefit.title} className="group">
-              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/15">
-                <benefit.icon className="size-5 text-primary" strokeWidth={1.75} />
+              <span
+                className={cn(
+                  "flex size-10 items-center justify-center rounded-xl transition-colors",
+                  benefit.tone === "amber"
+                    ? "bg-lusotop-amber/15 group-hover:bg-lusotop-amber/25"
+                    : "bg-primary/10 group-hover:bg-primary/15"
+                )}
+              >
+                <benefit.icon
+                  className={cn(
+                    "size-5",
+                    benefit.tone === "amber" ? "text-lusotop-amber" : "text-primary"
+                  )}
+                  strokeWidth={1.75}
+                />
               </span>
               <h3 className="mt-3 font-semibold text-foreground">
                 {benefit.title}
