@@ -53,9 +53,13 @@ export function ValorStep({
     [products]
   );
 
+  const selectedType = availableTypes.has(activeType)
+    ? activeType
+    : TYPE_TABS.find((tab) => availableTypes.has(tab.type))?.type;
+
   const visible = useMemo(
-    () => products?.filter((p) => p.type === activeType) ?? [],
-    [products, activeType]
+    () => products?.filter((p) => p.type === selectedType) ?? [],
+    [products, selectedType]
   );
 
   return (
@@ -88,7 +92,7 @@ export function ValorStep({
           <div className="mt-4 flex gap-1.5 rounded-xl bg-muted p-1">
             {TYPE_TABS.map((tab) => {
               const disabled = !availableTypes.has(tab.type);
-              const active = !disabled && activeType === tab.type;
+              const active = !disabled && selectedType === tab.type;
               return (
                 <button
                   key={tab.type}

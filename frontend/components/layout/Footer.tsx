@@ -48,10 +48,6 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row sm:items-center">
           <p>© {new Date().getFullYear()} LusoTop. Todos os direitos reservados.</p>
-          <p className="flex items-center gap-2">
-            <span className="size-1.5 rounded-full bg-primary" />
-            Pré-lançamento · Pagamentos reais brevemente
-          </p>
         </div>
       </div>
     </footer>
