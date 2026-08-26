@@ -1,13 +1,7 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { Clock, Mail, ShieldCheck } from "lucide-react";
 import { RechargeWizard } from "@/components/recharge/RechargeWizard";
-
-const Globe3D = dynamic(
-  () => import("@/components/home/Globe3D").then((m) => m.Globe3D),
-  { ssr: false }
-);
 
 const TRUST_POINTS = [
   { icon: Clock, label: "Entrega imediata" },
@@ -24,17 +18,6 @@ export function Hero() {
           "radial-gradient(ellipse 70% 60% at 10% 0%, oklch(0.32 0.1 149 / 55%), transparent 60%), radial-gradient(ellipse 65% 55% at 100% 100%, oklch(0.4 0.13 55 / 50%), transparent 60%)",
       }}
     >
-      <div
-        className="pointer-events-none absolute top-1/2 right-[-14%] hidden h-[560px] w-[560px] -translate-y-1/2 opacity-80 md:block lg:right-[-4%]"
-        style={{
-          maskImage: "radial-gradient(circle, black 55%, transparent 78%)",
-          WebkitMaskImage: "radial-gradient(circle, black 55%, transparent 78%)",
-        }}
-        aria-hidden="true"
-      >
-        <Globe3D />
-      </div>
-
       <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
           <div>
