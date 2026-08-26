@@ -41,7 +41,7 @@ export function CountriesGrid() {
           Países de língua portuguesa
         </h2>
         <p className="mt-4 max-w-xl text-muted-foreground">
-          Os 9 Estados-Membros da CPLP, todos já disponíveis.
+          Os 7 países da CPLP com operadora disponível.
         </p>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

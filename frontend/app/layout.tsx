@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://lusotop.online"),
   title: "LusoTop — Recargas para a comunidade lusófona",
   description:
-    "Recargas móveis rápidas e simples para os países da CPLP. Angola, Brasil, Cabo Verde, Guiné-Bissau, Guiné Equatorial, Moçambique, Portugal, São Tomé e Príncipe e Timor-Leste.",
+    "Recargas móveis rápidas e simples para os países da CPLP. Angola, Brasil, Cabo Verde, Guiné-Bissau, Moçambique, Portugal e São Tomé e Príncipe.",
   alternates: {
     canonical: "/",
   },

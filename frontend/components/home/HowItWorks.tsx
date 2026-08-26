@@ -11,7 +11,7 @@ const STEPS = [
     illustration: DestinationIllustration,
     title: "Escolha o destino",
     description:
-      "Selecione o país e a operadora do destinatário entre os 9 Estados-Membros da CPLP.",
+      "Selecione o país e a operadora do destinatário entre os 7 países da CPLP.",
   },
   {
     number: "02",

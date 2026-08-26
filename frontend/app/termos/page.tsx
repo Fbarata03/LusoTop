@@ -15,10 +15,9 @@ export default function TermosPage() {
         1. O serviço
       </h2>
       <p className="mt-3 leading-relaxed">
-        A LusoTop é uma plataforma para enviar recargas móveis para os 9
-        Estados-Membros da CPLP: Angola, Brasil, Cabo Verde, Guiné-Bissau,
-        Guiné Equatorial, Moçambique, Portugal, São Tomé e Príncipe, e
-        Timor-Leste.
+        A LusoTop é uma plataforma para enviar recargas móveis para 7 países
+        da CPLP: Angola, Brasil, Cabo Verde, Guiné-Bissau, Moçambique,
+        Portugal, e São Tomé e Príncipe.
       </p>
 
       <h2 className="mt-8 font-heading text-xl font-semibold text-foreground">

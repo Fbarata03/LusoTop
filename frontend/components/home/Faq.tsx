@@ -2,7 +2,7 @@ const FAQS = [
   {
     question: "Os pagamentos e as recargas já são reais?",
     answer:
-      "A LusoTop está em pré-lançamento. Já podes percorrer o fluxo completo de recarga para os 9 países da CPLP, mas a ligação a fornecedores de pagamento e de airtime ainda está a ser finalizada — por isso nenhum valor é cobrado nem nenhuma recarga é enviada enquanto essa fase não abrir.",
+      "A LusoTop está em pré-lançamento. Já podes percorrer o fluxo completo de recarga para os 7 países da CPLP com operadora disponível, mas a ligação a fornecedores de pagamento e de airtime ainda está a ser finalizada — por isso nenhum valor é cobrado nem nenhuma recarga é enviada enquanto essa fase não abrir.",
   },
   {
     question: "Preciso de criar conta para pedir uma recarga?",
@@ -22,7 +22,7 @@ const FAQS = [
   {
     question: "Que países estão cobertos?",
     answer:
-      "Os 9 Estados-Membros da CPLP: Angola, Brasil, Cabo Verde, Guiné-Bissau, Guiné Equatorial, Moçambique, Portugal, São Tomé e Príncipe, e Timor-Leste.",
+      "Angola, Brasil, Cabo Verde, Guiné-Bissau, Moçambique, Portugal, e São Tomé e Príncipe.",
   },
 ];
 
