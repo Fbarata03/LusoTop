@@ -1,22 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Wallet, Wifi, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchProductsByOperator, ApiError } from "@/lib/api";
 import type { Operator, Product, ProductType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { OperatorLogo } from "@/components/ui/operator-logo";
-import {
-  GlossyBalanceIcon,
-  GlossyDataIcon,
-  GlossyVoiceIcon,
-} from "@/components/illustrations/GlossyIcons";
 
-const TYPE_TABS: { type: ProductType; label: string; icon: typeof GlossyBalanceIcon }[] = [
-  { type: "AIRTIME", label: "Saldo", icon: GlossyBalanceIcon },
-  { type: "DATA", label: "Dados", icon: GlossyDataIcon },
-  { type: "VOICE", label: "Voz", icon: GlossyVoiceIcon },
+const TYPE_TABS: { type: ProductType; label: string; icon: typeof Wallet }[] = [
+  { type: "AIRTIME", label: "Saldo", icon: Wallet },
+  { type: "DATA", label: "Dados", icon: Wifi },
+  { type: "VOICE", label: "Voz", icon: Phone },
 ];
 
 export function ValorStep({
@@ -92,6 +88,7 @@ export function ValorStep({
           <div className="mt-4 flex gap-1.5 rounded-xl bg-muted p-1">
             {TYPE_TABS.map((tab) => {
               const disabled = !availableTypes.has(tab.type);
+              const active = !disabled && activeType === tab.type;
               return (
                 <button
                   key={tab.type}
@@ -99,14 +96,21 @@ export function ValorStep({
                   disabled={disabled}
                   onClick={() => setActiveType(tab.type)}
                   className={cn(
-                    "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-all",
+                    "flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-all duration-300",
                     disabled && "cursor-not-allowed opacity-40",
-                    !disabled && activeType === tab.type
+                    active
                       ? "bg-background text-foreground shadow-sm"
                       : !disabled && "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <tab.icon className="size-5" />
+                  <span
+                    className={cn(
+                      "flex size-6 items-center justify-center rounded-full transition-all duration-300",
+                      active ? "scale-100 bg-primary text-primary-foreground" : "scale-90 bg-transparent"
+                    )}
+                  >
+                    <tab.icon className="size-3.5" strokeWidth={2} />
+                  </span>
                   {tab.label}
                 </button>
               );

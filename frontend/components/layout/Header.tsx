@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Menu, X, User as UserIcon } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { LogoMark } from "@/components/illustrations/LogoMark";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -29,9 +30,7 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-white/10 bg-lusotop-navy">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-          <span className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <ShieldIcon className="size-4" />
-          </span>
+          <LogoMark className="size-8 shrink-0" />
           <span className="font-heading text-lg font-semibold text-white">
             Luso<span className="text-primary">Top</span>
           </span>
@@ -144,21 +143,5 @@ export function Header() {
         </nav>
       )}
     </header>
-  );
-}
-
-function ShieldIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
   );
 }
