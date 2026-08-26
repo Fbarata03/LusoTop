@@ -155,6 +155,12 @@ public class OrderService {
             return Session.create(params);
         } catch (StripeException e) {
             log.error("Stripe checkout session creation failed for order {}", order.getId(), e);
+            if ("amount_too_small".equals(e.getCode())) {
+                throw new BadRequestException(
+                        "AMOUNT_TOO_SMALL",
+                        "Este valor é demasiado baixo para ser pago por cartão. Escolhe um valor mais alto."
+                );
+            }
             throw new BadRequestException("STRIPE_ERROR", "Não foi possível iniciar o pagamento. Tente novamente.");
         }
     }

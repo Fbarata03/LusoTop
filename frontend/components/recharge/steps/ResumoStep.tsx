@@ -71,7 +71,7 @@ export function ResumoStep({
         operatorId: operator.id,
         productId: product.id,
         phoneNumber,
-        payerCurrency,
+        payerCurrency: rateAvailable ? payerCurrency : product.currency,
       });
       window.location.href = checkoutUrl;
     } catch (err) {
