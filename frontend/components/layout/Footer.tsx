@@ -5,7 +5,7 @@ const PLATFORM_LINKS = [
   { href: "#como-funciona", label: "Como funciona" },
   { href: "#paises", label: "Países disponíveis" },
   { href: "#ajuda", label: "Ajuda / FAQ" },
-  { href: "#criar-conta", label: "Criar conta" },
+  { href: "/criar-conta", label: "Criar conta" },
 ];
 
 const LEGAL_LINKS = [

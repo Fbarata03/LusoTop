@@ -4,6 +4,7 @@ import { Hero } from "@/components/home/Hero";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { CountriesGrid } from "@/components/home/CountriesGrid";
 import { WhyLusoTop } from "@/components/home/WhyLusoTop";
+import { Faq } from "@/components/home/Faq";
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
         <HowItWorks />
         <CountriesGrid />
         <WhyLusoTop />
+        <Faq />
       </main>
       <Footer />
     </div>
