@@ -9,7 +9,8 @@ public record ProductResponse(
         BigDecimal amount,
         String currency,
         String type,
-        String label
+        String label,
+        BigDecimal payerAmountEur
 ) {
 
     public static ProductResponse from(AirtimeProduct product) {
@@ -18,7 +19,10 @@ public record ProductResponse(
                 product.getAmount(),
                 product.getCurrency(),
                 product.getType(),
-                product.getLabel()
+                product.getLabel(),
+                product.getPayerAmountCents() != null
+                        ? BigDecimal.valueOf(product.getPayerAmountCents(), 2)
+                        : null
         );
     }
 }

@@ -72,8 +72,12 @@ public class OrderService {
         }
 
         // Todo o pagamento e sempre em EUR -- a moeda do pagador nao e configuravel.
+        // Produtos com stripe_price_id tem um preco real ja calculado (custo DingConnect +
+        // margem + buffer de taxas Stripe) -- usa-se esse valor tal e qual, sem reconverter.
         String payerCurrency = "EUR";
-        BigDecimal payerAmount = convert(product.getAmount(), product.getCurrency(), payerCurrency);
+        BigDecimal payerAmount = product.getPayerAmountCents() != null
+                ? BigDecimal.valueOf(product.getPayerAmountCents(), 2)
+                : convert(product.getAmount(), product.getCurrency(), payerCurrency);
 
         Order order = new Order();
         order.setUser(user);
@@ -88,7 +92,7 @@ public class OrderService {
         order.setStatus(OrderStatus.PENDING);
         order = orderRepository.save(order);
 
-        Session session = createCheckoutSession(order, operator, country);
+        Session session = createCheckoutSession(order, operator, country, product);
         order.setStripeCheckoutSessionId(session.getId());
         orderRepository.save(order);
 
@@ -118,11 +122,30 @@ public class OrderService {
         return OrderSummaryResponse.from(order);
     }
 
-    private Session createCheckoutSession(Order order, Operator operator, Country country) {
-        long unitAmount = order.getPayerAmount()
-                .multiply(BigDecimal.valueOf(100))
-                .setScale(0, RoundingMode.HALF_UP)
-                .longValueExact();
+    private Session createCheckoutSession(Order order, Operator operator, Country country, AirtimeProduct product) {
+        SessionCreateParams.LineItem lineItem = product.getStripePriceId() != null
+                ? SessionCreateParams.LineItem.builder()
+                        .setQuantity(1L)
+                        .setPrice(product.getStripePriceId())
+                        .build()
+                : SessionCreateParams.LineItem.builder()
+                        .setQuantity(1L)
+                        .setPriceData(
+                                SessionCreateParams.LineItem.PriceData.builder()
+                                        .setCurrency(order.getPayerCurrency().toLowerCase())
+                                        .setUnitAmount(order.getPayerAmount()
+                                                .multiply(BigDecimal.valueOf(100))
+                                                .setScale(0, RoundingMode.HALF_UP)
+                                                .longValueExact())
+                                        .setProductData(
+                                                SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                                        .setName("Recarga " + operator.getName() + " — " + country.getName())
+                                                        .setDescription("Para o número " + order.getPhoneNumber())
+                                                        .build()
+                                        )
+                                        .build()
+                        )
+                        .build();
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
@@ -130,23 +153,7 @@ public class OrderService {
                 .setCancelUrl(cancelUrl)
                 .setClientReferenceId(String.valueOf(order.getId()))
                 .putMetadata("orderId", String.valueOf(order.getId()))
-                .addLineItem(
-                        SessionCreateParams.LineItem.builder()
-                                .setQuantity(1L)
-                                .setPriceData(
-                                        SessionCreateParams.LineItem.PriceData.builder()
-                                                .setCurrency(order.getPayerCurrency().toLowerCase())
-                                                .setUnitAmount(unitAmount)
-                                                .setProductData(
-                                                        SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                                                .setName("Recarga " + operator.getName() + " — " + country.getName())
-                                                                .setDescription("Para o número " + order.getPhoneNumber())
-                                                                .build()
-                                                )
-                                                .build()
-                                )
-                                .build()
-                )
+                .addLineItem(lineItem)
                 // Managed Payments is on by default on this account and requires a Stripe Tax
                 // product tax code on every line item; we don't use Stripe Tax, so opt out.
                 .putExtraParam("managed_payments[enabled]", false)

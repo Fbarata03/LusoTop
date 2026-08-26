@@ -29,6 +29,7 @@ const productSchema = z.object({
   currency: z.string(),
   type: z.enum(["AIRTIME", "DATA", "VOICE"]),
   label: z.string().nullable(),
+  payerAmountEur: z.number().nullable(),
 });
 
 const userSchema = z.object({

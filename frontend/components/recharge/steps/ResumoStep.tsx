@@ -24,19 +24,25 @@ export function ResumoStep({
   onBack: () => void;
   onRestart: () => void;
 }) {
+  const hasRealPrice = product.payerAmountEur !== null;
   const [rate, setRate] = useState<number | null>(null);
-  const [rateAvailable, setRateAvailable] = useState(true);
-  const [loadingRate, setLoadingRate] = useState(true);
+  const [loadingRate, setLoadingRate] = useState(!hasRealPrice);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
 
+  const payerAmount = hasRealPrice
+    ? product.payerAmountEur!
+    : rate !== null
+      ? product.amount * rate
+      : null;
+
   useEffect(() => {
+    if (hasRealPrice) return;
     let cancelled = false;
 
     async function loadRate() {
       if (product.currency === "EUR") {
         setRate(1);
-        setRateAvailable(true);
         setLoadingRate(false);
         return;
       }
@@ -44,10 +50,9 @@ export function ResumoStep({
       try {
         const result = await fetchExchangeRate(product.currency, "EUR");
         if (cancelled) return;
-        setRateAvailable(result.available);
-        setRate(result.rate);
+        setRate(result.available ? result.rate : null);
       } catch {
-        if (!cancelled) setRateAvailable(false);
+        if (!cancelled) setRate(null);
       } finally {
         if (!cancelled) setLoadingRate(false);
       }
@@ -57,7 +62,7 @@ export function ResumoStep({
     return () => {
       cancelled = true;
     };
-  }, [product.currency]);
+  }, [product.currency, hasRealPrice]);
 
   async function handlePay() {
     setPayError(null);
@@ -131,9 +136,10 @@ export function ResumoStep({
         <div className="mt-2">
           {loadingRate ? (
             <p className="text-sm text-muted-foreground">A calcular…</p>
-          ) : rateAvailable && rate !== null ? (
+          ) : payerAmount !== null ? (
             <p className="font-heading text-2xl font-bold text-foreground">
-              ≈ {(product.amount * rate).toLocaleString("pt-PT", { maximumFractionDigits: 2 })}{" "}
+              {hasRealPrice ? "" : "≈ "}
+              {payerAmount.toLocaleString("pt-PT", { maximumFractionDigits: 2 })}{" "}
               <span className="text-base font-normal text-muted-foreground">EUR</span>
             </p>
           ) : (
@@ -144,7 +150,9 @@ export function ResumoStep({
           )}
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          Estimativa com taxas de câmbio atuais. O valor final é confirmado antes do pagamento.
+          {hasRealPrice
+            ? "Valor final, sem surpresas no pagamento."
+            : "Estimativa com taxas de câmbio atuais. O valor final é confirmado antes do pagamento."}
         </p>
       </div>
 
@@ -169,7 +177,7 @@ export function ResumoStep({
         <Button variant="ghost" onClick={onBack} disabled={paying}>
           Voltar
         </Button>
-        <Button onClick={handlePay} disabled={paying || loadingRate || !rateAvailable}>
+        <Button onClick={handlePay} disabled={paying || loadingRate || payerAmount === null}>
           {paying ? (
             <>
               <Loader2 className="size-4 animate-spin" /> A abrir pagamento…

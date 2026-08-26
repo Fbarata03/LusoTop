@@ -28,6 +28,7 @@ export interface Product {
   currency: string;
   type: ProductType;
   label: string | null;
+  payerAmountEur: number | null;
 }
 
 export interface User {

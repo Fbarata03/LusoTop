@@ -43,6 +43,13 @@ public class AirtimeProduct {
 
     private String label;
 
+    /** Preco real do catalogo Stripe (custo DingConnect + margem + buffer de taxas Stripe). */
+    @Column(name = "stripe_price_id")
+    private String stripePriceId;
+
+    @Column(name = "payer_amount_cents")
+    private Integer payerAmountCents;
+
     @Column(nullable = false)
     private boolean active;
 
