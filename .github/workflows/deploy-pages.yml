@@ -36,7 +36,6 @@ jobs:
 
       - run: npm run build
         env:
-          GITHUB_PAGES: "true"
           NEXT_PUBLIC_API_URL: https://lusotop-api.onrender.com
 
       - uses: actions/configure-pages@v5
