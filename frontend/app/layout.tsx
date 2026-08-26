@@ -15,9 +15,22 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://lusotop.online"),
   title: "LusoTop — Recargas para a comunidade lusófona",
   description:
     "Recargas móveis rápidas e simples para os países da CPLP. Angola, Brasil, Cabo Verde, Guiné-Bissau, Guiné Equatorial, Moçambique, Portugal, São Tomé e Príncipe e Timor-Leste.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "LusoTop — Recargas para a comunidade lusófona",
+    description:
+      "Recargas móveis rápidas e simples para os países da CPLP. Todos os países da CPLP disponíveis.",
+    url: "https://lusotop.online",
+    siteName: "LusoTop",
+    locale: "pt_PT",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
