@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  verification: {
+    google: "WTsTt58-RwTSRIryDtQvWN_POEOUI5WQkTmmZiU2E94",
+  },
   openGraph: {
     title: "LusoTop — Recargas para a comunidade lusófona",
     description:
