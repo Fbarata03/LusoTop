@@ -2,12 +2,14 @@
 
 Recargas simples. Onde o português conecta.
 
-Plataforma de recargas móveis internacionais para os 9 Estados-Membros da CPLP (Angola, Brasil,
-Cabo Verde, Guiné-Bissau, Guiné Equatorial, Moçambique, Portugal, São Tomé e Príncipe, Timor-Leste).
+Plataforma de recargas móveis internacionais para 7 países da CPLP com cobertura real de operadora
+(Angola, Brasil, Cabo Verde, Guiné-Bissau, Moçambique, Portugal, São Tomé e Príncipe).
 
-> **Estado atual: FASE 1 (arquitetura) + homepage com fluxo de recarga em modo DEMO.**
-> Verificado ponta-a-ponta (backend + frontend + Postgres real, sem erros de consola). Não há
-> integração real com fornecedores de pagamento ou airtime ainda — ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+> **Estado atual: pagamentos e recargas reais em produção.**
+> O checkout usa a Stripe (Checkout Sessions + webhook assinado) e, após confirmação do
+> pagamento, a recarga é enviada de imediato através da API SendTransfer da DingConnect. Se a
+> entrega falhar depois do pagamento confirmado, o valor é reembolsado automaticamente pela
+> Stripe — ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Stack
 
@@ -61,7 +63,21 @@ cd backend
 ```
 
 A API sobe em `http://localhost:8080`. As migrations Flyway aplicam-se automaticamente e semeiam
-os 9 países da CPLP, todos `ACTIVE`, cada um com operadoras e valores de recarga demo.
+os 7 países da CPLP com cobertura real de operadora, cada um com os produtos de airtime da
+DingConnect já ligados por SKU.
+
+Para pagamentos e recargas reais, defina também:
+
+```
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_SUCCESS_URL=https://<domínio>/recarga/sucesso?session_id={CHECKOUT_SESSION_ID}
+STRIPE_CANCEL_URL=https://<domínio>/recarga/cancelada
+DINGCONNECT_API_KEY=...
+```
+
+Sem estas variáveis a criação da sessão de checkout falha (`STRIPE_ERROR`) e a entrega da recarga
+falha (sem `DINGCONNECT_API_KEY`), mas o resto da aplicação continua a funcionar.
 
 Verificação rápida:
 
@@ -81,20 +97,22 @@ npm run dev
 Abrir `http://localhost:3000`. Por padrão aponta para `NEXT_PUBLIC_API_URL=http://localhost:8080`
 (ver `frontend/.env.local.example`).
 
-## Modo DEMO
+## Pagamentos e recargas
 
-Todos os 9 países da CPLP estão `ACTIVE` e têm operadoras com planos de Saldo, Dados móveis e Voz
-simulados — claramente identificados como dados de demonstração e não correspondem a uma tabela
-real de nenhum fornecedor. O wizard de recarga funciona ponta-a-ponta para qualquer país, mas
-nenhum pagamento ou recarga reais são processados até existir integração com um fornecedor real
-(fases futuras).
+Fluxo completo: o cliente escolhe país/operadora/número/valor, paga via Stripe Checkout, o
+webhook `checkout.session.completed` confirma o pagamento (assinatura validada com
+`STRIPE_WEBHOOK_SECRET`) e o backend envia a recarga através do `SendTransfer` da DingConnect na
+mesma transação. A linha do pedido fica bloqueada (`PESSIMISTIC_WRITE`) durante essa confirmação
+para impedir que o webhook e o polling do frontend disparem duas entregas para o mesmo pagamento.
+Se a entrega falhar, o pedido fica `FAILED` e o pagamento é reembolsado automaticamente.
 
 ## Autenticação
 
-Ao contrário da recarga, o registo/login **não é demo** — passwords com hash BCrypt, JWT real
-(`POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`), sem depender de nenhum
-fornecedor externo. Defina `JWT_SECRET` em produção (o valor por omissão em `application.yml`
-serve apenas para desenvolvimento local).
+Registo/login com passwords em hash BCrypt e JWT real (`POST /api/auth/register`,
+`POST /api/auth/login`, `GET /api/auth/me`), sem depender de nenhum fornecedor externo. Defina
+`JWT_SECRET` em produção (o valor por omissão em `application.yml` serve apenas para
+desenvolvimento local). Atualmente não é obrigatório ter sessão iniciada para pedir e pagar uma
+recarga.
 
 ## Documentação
 
