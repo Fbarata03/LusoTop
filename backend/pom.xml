@@ -96,6 +96,17 @@
             <version>3.0.3</version>
         </dependency>
 
+        <!-- Usado so pelo DingConnectService para o cliente proxy: o java.net.http.HttpClient
+             nativo, quando tem um Authenticator configurado (necessario para autenticar o tunel
+             HTTPS via proxy), intercepta TAMBEM as respostas 401 do servidor de destino e rebenta
+             com "WWW-Authenticate header missing" se esse cabecalho nao vier (a DingConnect nao o
+             envia). O Apache HttpClient trata a autenticacao do proxy de forma independente da
+             resposta do servidor de destino, evitando esse problema. -->
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

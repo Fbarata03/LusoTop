@@ -1,20 +1,23 @@
 package com.lusotop.api.delivery;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.CredentialsStore;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import java.net.Authenticator;
-import java.net.InetSocketAddress;
-import java.net.PasswordAuthentication;
-import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URLDecoder;
-import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.math.BigDecimal;
 import java.util.List;
@@ -41,50 +44,46 @@ public class DingConnectService {
             @Value("${app.dingconnect.base-url}") String baseUrl,
             @Value("${app.dingconnect.proxy-url:}") String proxyUrl
     ) {
-        HttpClient.Builder httpClientBuilder = HttpClient.newBuilder();
-
-        // A Cloudflare usa o fingerprint HTTP/2 (ordem dos frames SETTINGS, pseudo-headers, etc.)
-        // como um dos sinais principais de deteção de bots -- o HttpClient do Java negoceia HTTP/2
-        // por omissao e o fingerprint dele e reconhecivel, o que pode bloquear pedidos mesmo vindos
-        // de um IP na whitelist (a whitelist so costuma ignorar regras de WAF, nao o Bot Management).
-        // Forcar HTTP/1.1 evita esse sinal de deteção por completo; a API da DingConnect nao exige
-        // HTTP/2.
-        httpClientBuilder.version(HttpClient.Version.HTTP_1_1);
+        HttpClientBuilder httpClientBuilder = HttpClients.custom();
 
         // A DingConnect exige que os pedidos de producao venham de um IP autorizado
         // (whitelist obrigatoria, confirmado pelo suporte deles) -- o Render nao tem IP fixo,
         // por isso as chamadas passam por um proxy dedicado (servidor com IP fixo) quando
         // DINGCONNECT_PROXY_URL esta definido. Sem isso, liga-se diretamente (ex: dev local).
+        //
+        // Usa-se o Apache HttpClient em vez do java.net.http.HttpClient nativo do Java: este
+        // ultimo, quando tem um Authenticator configurado (necessario para autenticar o tunel
+        // HTTPS via proxy), intercepta TAMBEM as respostas 401 do servidor de destino e rebenta
+        // com "WWW-Authenticate header missing" se esse cabecalho nao vier -- e a DingConnect nao
+        // o envia. O Apache HttpClient associa as credenciais do proxy apenas ao AuthScope do
+        // proxy (via CredentialsProvider), sem nenhum efeito sobre respostas do servidor de
+        // destino.
         if (proxyUrl != null && !proxyUrl.isBlank()) {
-            // O JDK desativa por omissao a autenticacao Basic em tuneis HTTPS via proxy
-            // (CVE-2016-5597 hardening) -- sem isto, todos os pedidos falham com 407 mesmo
-            // com credenciais corretas.
-            System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
-
             URI proxy = URI.create(proxyUrl);
+            HttpHost proxyHost = new HttpHost("http", proxy.getHost(), proxy.getPort());
+            httpClientBuilder.setProxy(proxyHost);
+
             String[] userInfo = proxy.getUserInfo() != null ? proxy.getUserInfo().split(":", 2) : null;
-            httpClientBuilder.proxy(ProxySelector.of(new InetSocketAddress(proxy.getHost(), proxy.getPort())));
             if (userInfo != null && userInfo.length == 2) {
                 String proxyUser = URLDecoder.decode(userInfo[0], StandardCharsets.UTF_8);
                 String proxyPassword = URLDecoder.decode(userInfo[1], StandardCharsets.UTF_8);
-                httpClientBuilder.authenticator(new Authenticator() {
-                    @Override
-                    protected PasswordAuthentication getPasswordAuthentication() {
-                        if (getRequestorType() == RequestorType.PROXY) {
-                            return new PasswordAuthentication(proxyUser, proxyPassword.toCharArray());
-                        }
-                        return null;
-                    }
-                });
+                CredentialsStore credentialsStore = new BasicCredentialsProvider();
+                credentialsStore.setCredentials(
+                        new AuthScope(proxyHost),
+                        new UsernamePasswordCredentials(proxyUser, proxyPassword.toCharArray())
+                );
+                httpClientBuilder.setDefaultCredentialsProvider(credentialsStore);
             }
             log.info("DingConnectService: a encaminhar pedidos atraves do proxy {}:{}", proxy.getHost(), proxy.getPort());
         }
+
+        CloseableHttpClient httpClient = httpClientBuilder.build();
 
         // O dominio da DingConnect esta atras da Cloudflare, que bloqueia com 403 pedidos sem
         // User-Agent de browser (o mesmo aconteceu ao buscar os logos das operadoras).
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
-                .requestFactory(new JdkClientHttpRequestFactory(httpClientBuilder.build()))
+                .requestFactory(new HttpComponentsClientHttpRequestFactory(httpClient))
                 .defaultHeader("User-Agent", "Mozilla/5.0 (compatible; LusoTop/1.0)")
                 .build();
     }
