@@ -117,3 +117,7 @@ recarga.
 ## Documentação
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — arquitetura, modelo ER, endpoints
+
+## Licença
+
+Software proprietário. Todos os direitos reservados — ver [LICENSE](LICENSE).
