@@ -98,24 +98,28 @@ export function ValorStep({
                   key={tab.type}
                   type="button"
                   disabled={disabled}
+                  title={disabled ? `${tab.label}: em breve` : undefined}
                   onClick={() => setActiveType(tab.type)}
                   className={cn(
-                    "flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-all duration-300",
+                    "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-2 text-sm font-medium transition-all duration-300",
                     disabled && "cursor-not-allowed opacity-40",
                     active
                       ? "bg-background text-foreground shadow-sm"
                       : !disabled && "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <span
-                    className={cn(
-                      "flex size-6 items-center justify-center rounded-full transition-all duration-300",
-                      active ? "scale-100 bg-primary text-primary-foreground" : "scale-90 bg-transparent"
-                    )}
-                  >
-                    <tab.icon className="size-3.5" strokeWidth={2} />
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "flex size-6 items-center justify-center rounded-full transition-all duration-300",
+                        active ? "scale-100 bg-primary text-primary-foreground" : "scale-90 bg-transparent"
+                      )}
+                    >
+                      <tab.icon className="size-3.5" strokeWidth={2} />
+                    </span>
+                    {tab.label}
                   </span>
-                  {tab.label}
+                  {disabled && <span className="text-[10px] font-normal">Em breve</span>}
                 </button>
               );
             })}
