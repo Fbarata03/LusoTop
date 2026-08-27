@@ -26,7 +26,7 @@ export default function EntrarPage() {
     setLoading(true);
     try {
       await login(email, password);
-      router.push("/");
+      router.push("/minhas-recargas");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Não foi possível entrar.");
     } finally {

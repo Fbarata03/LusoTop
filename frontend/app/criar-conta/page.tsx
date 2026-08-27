@@ -33,7 +33,7 @@ export default function CriarContaPage() {
     setLoading(true);
     try {
       await register(name, email, password);
-      router.push("/");
+      router.push("/minhas-recargas");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Não foi possível criar a conta.");
     } finally {
