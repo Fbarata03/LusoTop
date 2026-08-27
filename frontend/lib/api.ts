@@ -202,3 +202,59 @@ export function fetchMyOrders(): Promise<OrderSummary[]> {
     headers: authHeaders(),
   });
 }
+
+const adminDashboardSchema = z.object({
+  totalCustomers: z.number(),
+  totalOrders: z.number(),
+  deliveredOrders: z.number(),
+  pendingDeliveryOrders: z.number(),
+  failedDeliveryOrders: z.number(),
+  paidOrders: z.number(),
+  failedPayments: z.number(),
+  totalRevenueEur: z.number(),
+  ordersToday: z.number(),
+  ordersThisMonth: z.number(),
+});
+export type AdminDashboard = z.infer<typeof adminDashboardSchema>;
+
+const adminOrderSchema = z.object({
+  id: z.number(),
+  customerName: z.string().nullable(),
+  customerEmail: z.string().nullable(),
+  status: z.enum(["PENDING", "PAID", "FAILED", "CANCELLED"]),
+  deliveryStatus: z.enum(["PENDING", "DELIVERED", "FAILED"]),
+  refunded: z.boolean(),
+  countryName: z.string(),
+  operatorName: z.string(),
+  phoneNumber: z.string(),
+  payerAmount: z.number(),
+  payerCurrency: z.string(),
+  stripePaymentIntentId: z.string().nullable(),
+  dingconnectTransferRef: z.string().nullable(),
+  deliveryError: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type AdminOrder = z.infer<typeof adminOrderSchema>;
+
+const adminCustomerSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  email: z.string(),
+  createdAt: z.string(),
+  orderCount: z.number(),
+  totalSpentEur: z.number(),
+  lastActivity: z.string(),
+});
+export type AdminCustomer = z.infer<typeof adminCustomerSchema>;
+
+export function fetchAdminDashboard(): Promise<AdminDashboard> {
+  return request("/api/admin/dashboard", adminDashboardSchema, { headers: authHeaders() });
+}
+
+export function fetchAdminOrders(): Promise<AdminOrder[]> {
+  return request("/api/admin/orders", z.array(adminOrderSchema), { headers: authHeaders() });
+}
+
+export function fetchAdminCustomers(): Promise<AdminCustomer[]> {
+  return request("/api/admin/customers", z.array(adminCustomerSchema), { headers: authHeaders() });
+}
