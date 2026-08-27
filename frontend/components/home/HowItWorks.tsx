@@ -38,12 +38,12 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section id="como-funciona" className="bg-lusotop-navy py-24">
+    <section id="como-funciona" className="bg-lusotop-cream py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <p className="text-sm font-semibold tracking-wide text-primary uppercase">
           Processo
         </p>
-        <h2 className="mt-3 max-w-xl font-heading text-4xl font-semibold text-white sm:text-5xl">
+        <h2 className="mt-3 max-w-xl font-heading text-4xl font-semibold text-foreground sm:text-5xl">
           Em quatro passos simples
         </h2>
 
@@ -51,14 +51,14 @@ export function HowItWorks() {
           {STEPS.map((step) => (
             <div
               key={step.number}
-              className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-white/[0.07]"
+              className="relative overflow-hidden rounded-2xl border border-border bg-background p-6 transition-all hover:-translate-y-0.5 hover:border-primary/30"
             >
-              <span className="absolute top-4 right-5 font-heading text-4xl font-semibold text-white/10">
+              <span className="absolute top-4 right-5 font-heading text-4xl font-semibold text-foreground/10">
                 {step.number}
               </span>
               <step.illustration className="h-16 w-16" />
-              <h3 className="mt-4 font-semibold text-white">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/60">
+              <h3 className="mt-4 font-semibold text-foreground">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {step.description}
               </p>
             </div>
