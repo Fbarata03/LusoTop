@@ -57,6 +57,14 @@ export function Header() {
 
           {!loading && user ? (
             <div className="hidden items-center gap-3 sm:flex">
+              {user.role === "ADMIN" && (
+                <Link
+                  href="/admin"
+                  className="text-sm text-white/80 transition-colors hover:text-white"
+                >
+                  Admin
+                </Link>
+              )}
               <Link
                 href="/minhas-recargas"
                 className="flex items-center gap-1.5 text-sm text-white/80 transition-colors hover:text-white"
@@ -122,6 +130,18 @@ export function Header() {
             <ThemeToggle />
             {user ? (
               <>
+                {user.role === "ADMIN" && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      buttonVariants({ variant: "ghost" }),
+                      "flex-1 text-white hover:bg-white/10 hover:text-white"
+                    )}
+                  >
+                    Admin
+                  </Link>
+                )}
                 <Link
                   href="/minhas-recargas"
                   onClick={() => setOpen(false)}
