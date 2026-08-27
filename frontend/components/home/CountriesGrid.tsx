@@ -59,7 +59,7 @@ export function CountriesGrid() {
           {countries?.map((country) => (
             <div
               key={country.isoCode}
-              className="relative rounded-2xl border border-border bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+              className="relative rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
             >
               <span
                 className={cn(
