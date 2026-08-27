@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Clock, Download, Loader2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
@@ -69,6 +70,10 @@ export default function MinhasRecargasPage() {
               <OrderCard key={order.id} order={order} />
             ))}
           </div>
+
+          <Button variant="ghost" render={<Link href="/" />} className="mt-8">
+            Voltar ao início
+          </Button>
         </div>
       </main>
       <Footer />
