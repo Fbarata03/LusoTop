@@ -43,6 +43,14 @@ public class DingConnectService {
     ) {
         HttpClient.Builder httpClientBuilder = HttpClient.newBuilder();
 
+        // A Cloudflare usa o fingerprint HTTP/2 (ordem dos frames SETTINGS, pseudo-headers, etc.)
+        // como um dos sinais principais de deteção de bots -- o HttpClient do Java negoceia HTTP/2
+        // por omissao e o fingerprint dele e reconhecivel, o que pode bloquear pedidos mesmo vindos
+        // de um IP na whitelist (a whitelist so costuma ignorar regras de WAF, nao o Bot Management).
+        // Forcar HTTP/1.1 evita esse sinal de deteção por completo; a API da DingConnect nao exige
+        // HTTP/2.
+        httpClientBuilder.version(HttpClient.Version.HTTP_1_1);
+
         // A DingConnect exige que os pedidos de producao venham de um IP autorizado
         // (whitelist obrigatoria, confirmado pelo suporte deles) -- o Render nao tem IP fixo,
         // por isso as chamadas passam por um proxy dedicado (servidor com IP fixo) quando
