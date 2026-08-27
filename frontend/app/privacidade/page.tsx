@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/layout/LegalPage";
 
-export const metadata: Metadata = { title: "Privacidade: LusoTop" };
+export const metadata: Metadata = { title: "Privacidade | LusoTop" };
 
 export default function PrivacidadePage() {
   return (
