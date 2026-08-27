@@ -9,7 +9,7 @@ Plataforma de recargas móveis internacionais para 7 países da CPLP com cobertu
 > O checkout usa a Stripe (Checkout Sessions + webhook assinado) e, após confirmação do
 > pagamento, a recarga é enviada de imediato através da API SendTransfer da DingConnect. Se a
 > entrega falhar depois do pagamento confirmado, o valor é reembolsado automaticamente pela
-> Stripe ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+> Stripe. Ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Stack
 
@@ -117,13 +117,14 @@ Se a entrega falhar, o pedido fica `FAILED` e o pagamento é reembolsado automat
 Registo/login com passwords em hash BCrypt e JWT real (`POST /api/auth/register`,
 `POST /api/auth/login`, `GET /api/auth/me`), sem depender de nenhum fornecedor externo. Defina
 `JWT_SECRET` em produção (o valor por omissão em `application.yml` serve apenas para
-desenvolvimento local). Atualmente não é obrigatório ter sessão iniciada para pedir e pagar uma
-recarga.
+desenvolvimento local). Não é obrigatório ter sessão iniciada para escolher país, operadora,
+número e valor, mas é obrigatório entrar ou criar conta antes de avançar para o pagamento — o
+backend recusa `POST /api/orders` sem utilizador autenticado.
 
 ## Documentação
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — arquitetura, modelo ER, endpoints
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): arquitetura, modelo ER, endpoints
 
 ## Licença
 
-Software proprietário. Todos os direitos reservados — ver [LICENSE](LICENSE).
+Software proprietário. Todos os direitos reservados. Ver [LICENSE](LICENSE).
