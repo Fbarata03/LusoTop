@@ -26,7 +26,7 @@ export function Hero() {
     >
       <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
-          <div className="flex flex-col items-center text-center lg:items-center lg:text-center">
+          <div>
             <h1 className="animate-in fade-in slide-in-from-bottom-4 font-heading text-5xl leading-[1.05] font-semibold text-foreground duration-700 sm:text-6xl">
               Envie recargas para países de{" "}
               <span className="text-primary italic">língua portuguesa</span>
@@ -37,7 +37,7 @@ export function Hero() {
               os países da CPLP disponíveis.
             </p>
 
-            <div className="animate-in fade-in slide-in-from-bottom-4 mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground delay-300 duration-700 fill-mode-backwards">
+            <div className="animate-in fade-in slide-in-from-bottom-4 mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground delay-300 duration-700 fill-mode-backwards">
               {TRUST_POINTS.map((point) => (
                 <span key={point.label} className="flex items-center gap-1.5">
                   <point.icon className="size-4 text-primary" />
