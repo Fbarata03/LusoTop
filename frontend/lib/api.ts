@@ -60,6 +60,8 @@ const createOrderResponseSchema = z.object({
 const orderSummarySchema = z.object({
   id: z.number(),
   status: z.enum(["PENDING", "PAID", "FAILED", "CANCELLED"]),
+  deliveryStatus: z.enum(["PENDING", "DELIVERED", "FAILED"]),
+  refunded: z.boolean(),
   countryName: z.string(),
   countryIso: z.string(),
   operatorName: z.string(),

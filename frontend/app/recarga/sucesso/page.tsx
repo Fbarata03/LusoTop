@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
@@ -55,10 +55,51 @@ function SucessoContent() {
 
       {!loading && !error && order && (
         <>
-          <CheckCircle2 className="mx-auto size-10 text-primary" />
-          <h1 className="mt-4 font-heading text-xl font-semibold text-foreground">
-            {order.status === "PAID" ? "Pagamento confirmado" : "Pagamento pendente"}
-          </h1>
+          {order.status === "PAID" && order.deliveryStatus === "DELIVERED" && (
+            <>
+              <CheckCircle2 className="mx-auto size-10 text-primary" />
+              <h1 className="mt-4 font-heading text-xl font-semibold text-foreground">
+                Recarga concluída com sucesso
+              </h1>
+            </>
+          )}
+
+          {order.status === "PAID" && order.deliveryStatus === "FAILED" && (
+            <>
+              <AlertTriangle className="mx-auto size-10 text-destructive" />
+              <h1 className="mt-4 font-heading text-xl font-semibold text-foreground">
+                Problema ao processar a recarga
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                O pagamento foi confirmado, mas ocorreu um problema ao processar a recarga.
+                {order.refunded
+                  ? " O valor pago foi reembolsado automaticamente."
+                  : " A nossa equipa foi notificada e vai resolver o reembolso em breve."}
+              </p>
+            </>
+          )}
+
+          {order.status === "PAID" && order.deliveryStatus === "PENDING" && (
+            <>
+              <Loader2 className="mx-auto size-10 animate-spin text-primary" />
+              <h1 className="mt-4 font-heading text-xl font-semibold text-foreground">
+                Pagamento confirmado
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                A processar a recarga. Isto pode demorar alguns instantes.
+              </p>
+            </>
+          )}
+
+          {order.status !== "PAID" && (
+            <>
+              <XCircle className="mx-auto size-10 text-destructive" />
+              <h1 className="mt-4 font-heading text-xl font-semibold text-foreground">
+                Pagamento pendente
+              </h1>
+            </>
+          )}
+
           <dl className="mt-5 space-y-2 text-left text-sm">
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Destino</dt>

@@ -44,10 +44,13 @@ export interface AuthResult {
 }
 
 export type OrderStatus = "PENDING" | "PAID" | "FAILED" | "CANCELLED";
+export type DeliveryStatus = "PENDING" | "DELIVERED" | "FAILED";
 
 export interface OrderSummary {
   id: number;
   status: OrderStatus;
+  deliveryStatus: DeliveryStatus;
+  refunded: boolean;
   countryName: string;
   countryIso: string;
   operatorName: string;

@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 public record OrderSummaryResponse(
         Long id,
         String status,
+        String deliveryStatus,
+        boolean refunded,
         String countryName,
         String countryIso,
         String operatorName,
@@ -22,6 +24,8 @@ public record OrderSummaryResponse(
         return new OrderSummaryResponse(
                 order.getId(),
                 order.getStatus().name(),
+                order.getDeliveryStatus().name(),
+                order.isRefunded(),
                 order.getCountry().getName(),
                 order.getCountry().getIsoCode(),
                 order.getOperator().getName(),
