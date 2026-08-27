@@ -1,12 +1,12 @@
 "use client";
 
-import { Clock, Mail, ShieldCheck } from "lucide-react";
+import { Clock, Lock, ShieldCheck } from "lucide-react";
 import { RechargeWizard } from "@/components/recharge/RechargeWizard";
 
 const TRUST_POINTS = [
   { icon: Clock, label: "Entrega imediata" },
   { icon: ShieldCheck, label: "Sem taxas ocultas" },
-  { icon: Mail, label: "Comprovativo por email" },
+  { icon: Lock, label: "Pagamento seguro via Stripe" },
 ];
 
 export function Hero() {

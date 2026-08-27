@@ -2,12 +2,12 @@ const FAQS = [
   {
     question: "Os pagamentos e as recargas já são reais?",
     answer:
-      "A LusoTop está em pré-lançamento. Já podes percorrer o fluxo completo de recarga para os 7 países da CPLP com operadora disponível, mas a ligação ao fornecedor de airtime ainda está a ser finalizada. Por isso, mesmo com o pagamento confirmado, a recarga ainda não é enviada enquanto essa fase não abrir.",
+      "Sim. O pagamento é processado pela Stripe e a recarga é enviada de imediato através da DingConnect, o nosso fornecedor de airtime, para os 7 países da CPLP.",
   },
   {
     question: "Preciso de criar conta para pedir uma recarga?",
     answer:
-      "Não. Podes percorrer o fluxo de recarga sem sessão iniciada. A conta serve para guardar o histórico das tuas recargas assim que os pagamentos reais estiverem ativos.",
+      "Não. Podes percorrer o fluxo de recarga e pagar sem sessão iniciada.",
   },
   {
     question: "Os meus dados de conta estão seguros?",
@@ -15,9 +15,9 @@ const FAQS = [
       "Sim. O registo e o login já funcionam em produção: as passwords são guardadas com hash BCrypt e a sessão usa um token JWT real.",
   },
   {
-    question: "Quando é que os pagamentos reais ficam disponíveis?",
+    question: "E se o pagamento for feito mas a recarga falhar?",
     answer:
-      "A integração com fornecedores de pagamento e de airtime está a ser finalizada. Vamos anunciar aqui assim que ficar disponível.",
+      "Isso é raro, mas se acontecer, o valor pago é reembolsado automaticamente através da Stripe — não fica a tua conta a descoberto sem recarga.",
   },
   {
     question: "Que países estão cobertos?",
