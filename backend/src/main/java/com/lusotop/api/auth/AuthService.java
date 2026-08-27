@@ -81,7 +81,9 @@ public class AuthService {
         GoogleIdToken token;
         try {
             token = googleIdTokenVerifier.verify(idToken);
-        } catch (GeneralSecurityException | IOException e) {
+        } catch (GeneralSecurityException | IOException | IllegalArgumentException e) {
+            // IllegalArgumentException cobre tokens malformados (ex: nao e sequer um JWT valido) --
+            // a biblioteca do Google nao usa so as excecoes documentadas para isso.
             throw new BadRequestException("GOOGLE_VERIFICATION_FAILED", "Não foi possível verificar o token do Google.");
         }
         if (token == null) {
