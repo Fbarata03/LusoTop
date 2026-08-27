@@ -7,17 +7,16 @@ RUN mvn -B clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+# O DingConnectService chama a API da DingConnect atraves de um subprocesso curl (nao de um
+# cliente HTTP nativo do Java) -- clientes HTTP Java (java.net.http.HttpClient e Apache
+# HttpClient) foram ambos bloqueados pela Cloudflare da DingConnect mesmo vindo do IP na
+# whitelist (assinatura TLS/HTTP reconhecida como nao-browser); o curl nunca falhou.
+RUN apk add --no-cache curl
 COPY --from=build /app/target/lusotop-api.jar app.jar
 EXPOSE 8080
-# jdk.http.auth.tunneling.disabledSchemes precisa de estar definido antes de qualquer classe do
-# HttpClient carregar -- defini-lo em runtime (System.setProperty) pode chegar tarde de mais
-# consoante a ordem de inicializacao dos beans do Spring. Como flag de arranque da JVM garante
-# que fica ativo desde o inicio, sempre. Sem isto, pedidos autenticados atraves do proxy da
-# DingConnect falham sempre com 407, mesmo com credenciais corretas.
-#
-# java.net.preferIPv4Stack=true: protecao extra -- um pedido real chegou a sair diretamente por
-# IPv6 do Render em vez de passar pelo proxy da DingConnect (bug de routing corrigido no
-# DingConnectService), o que contornou silenciosamente o proxy e foi bloqueado pela Cloudflare.
-# Com IPv6 desativado na JVM, qualquer futura falha de routing semelhante falha de forma limpa
-# (sem rota direta disponivel) em vez de escapar pela Cloudflare sem ninguem reparar.
-ENTRYPOINT ["java", "-Djdk.http.auth.tunneling.disabledSchemes=", "-Djava.net.preferIPv4Stack=true", "-jar", "app.jar"]
+# java.net.preferIPv4Stack=true: protecao extra a nivel da JVM -- um pedido real ja chegou a sair
+# diretamente por IPv6 do Render em vez de passar pelo proxy da DingConnect (bug de routing,
+# corrigido), contornando silenciosamente o proxy e sendo bloqueado pela Cloudflare. Com IPv6
+# desativado, qualquer chamada Java direta futura falha de forma limpa em vez de escapar sem
+# ninguem reparar (nao afeta o curl, que gere a sua propria rede fora da JVM).
+ENTRYPOINT ["java", "-Djava.net.preferIPv4Stack=true", "-jar", "app.jar"]

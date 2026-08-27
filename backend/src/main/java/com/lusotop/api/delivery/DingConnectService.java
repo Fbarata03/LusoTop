@@ -1,42 +1,47 @@
 package com.lusotop.api.delivery;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.hc.client5.http.auth.AuthScope;
-import org.apache.hc.client5.http.auth.CredentialsStore;
-import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
-import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.client5.http.impl.routing.DefaultProxyRoutePlanner;
-import org.apache.hc.core5.http.HttpHost;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
-import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Envio real de recarga via DingConnect (SendTransfer). A API espera/devolve campos em
  * PascalCase (ver GetProviders/GetProducts), diferente da convencao camelCase do resto do
  * projeto -- por isso os DTOs aqui usam @JsonProperty explicito.
+ *
+ * O pedido HTTP e feito atraves de um subprocesso curl, nao de um cliente HTTP nativo do Java
+ * (java.net.http.HttpClient / Apache HttpClient). Ambos foram tentados e ambos, mesmo vindo do
+ * mesmo IP whitelisted no proxy dedicado, foram bloqueados pela Cloudflare da DingConnect (403,
+ * confirmado com Ray ID proprio e sem qualquer registo de transacao no backend deles -- ou seja,
+ * bloqueado na borda, antes de chegar a aplicacao). A assinatura TLS/HTTP desses clientes Java e
+ * reconhecivel como nao-browser pelo Bot Management da Cloudflare, independente do IP estar na
+ * whitelist. O curl, com a mesma configuracao de proxy e headers, nunca falhou uma unica vez em
+ * dezenas de testes diretos ao mesmo endpoint -- por isso usa-se aqui tambem.
  */
 @Service
 public class DingConnectService {
 
     private static final Logger log = LoggerFactory.getLogger(DingConnectService.class);
     private static final Set<String> SUCCESS_STATES = Set.of("Complete", "Approved");
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final Duration CURL_TIMEOUT = Duration.ofSeconds(30);
 
-    private final RestClient restClient;
+    private final String baseUrl;
+    private final String proxyUrl;
 
     @Value("${app.dingconnect.api-key}")
     private String apiKey;
@@ -45,53 +50,11 @@ public class DingConnectService {
             @Value("${app.dingconnect.base-url}") String baseUrl,
             @Value("${app.dingconnect.proxy-url:}") String proxyUrl
     ) {
-        HttpClientBuilder httpClientBuilder = HttpClients.custom();
-
-        // A DingConnect exige que os pedidos de producao venham de um IP autorizado
-        // (whitelist obrigatoria, confirmado pelo suporte deles) -- o Render nao tem IP fixo,
-        // por isso as chamadas passam por um proxy dedicado (servidor com IP fixo) quando
-        // DINGCONNECT_PROXY_URL esta definido. Sem isso, liga-se diretamente (ex: dev local).
-        //
-        // Usa-se o Apache HttpClient em vez do java.net.http.HttpClient nativo do Java: este
-        // ultimo, quando tem um Authenticator configurado (necessario para autenticar o tunel
-        // HTTPS via proxy), intercepta TAMBEM as respostas 401 do servidor de destino e rebenta
-        // com "WWW-Authenticate header missing" se esse cabecalho nao vier -- e a DingConnect nao
-        // o envia. O Apache HttpClient associa as credenciais do proxy apenas ao AuthScope do
-        // proxy (via CredentialsProvider), sem nenhum efeito sobre respostas do servidor de
-        // destino.
-        if (proxyUrl != null && !proxyUrl.isBlank()) {
-            URI proxy = URI.create(proxyUrl);
-            HttpHost proxyHost = new HttpHost("http", proxy.getHost(), proxy.getPort());
-            // setProxy() por si so demonstrou nao ser fiavel em producao -- um pedido real
-            // (order #30) confirmou-se, pelo IP devolvido na pagina de bloqueio da Cloudflare,
-            // ter saido diretamente via IPv6 do Render, sem passar pelo proxy. Definir o
-            // RoutePlanner explicitamente elimina qualquer ambiguidade no fallback interno do
-            // builder.
-            httpClientBuilder.setRoutePlanner(new DefaultProxyRoutePlanner(proxyHost));
-
-            String[] userInfo = proxy.getUserInfo() != null ? proxy.getUserInfo().split(":", 2) : null;
-            if (userInfo != null && userInfo.length == 2) {
-                String proxyUser = URLDecoder.decode(userInfo[0], StandardCharsets.UTF_8);
-                String proxyPassword = URLDecoder.decode(userInfo[1], StandardCharsets.UTF_8);
-                CredentialsStore credentialsStore = new BasicCredentialsProvider();
-                credentialsStore.setCredentials(
-                        new AuthScope(proxyHost),
-                        new UsernamePasswordCredentials(proxyUser, proxyPassword.toCharArray())
-                );
-                httpClientBuilder.setDefaultCredentialsProvider(credentialsStore);
-            }
-            log.info("DingConnectService: a encaminhar pedidos atraves do proxy {}:{}", proxy.getHost(), proxy.getPort());
+        this.baseUrl = baseUrl;
+        this.proxyUrl = (proxyUrl != null && !proxyUrl.isBlank()) ? proxyUrl : null;
+        if (this.proxyUrl != null) {
+            log.info("DingConnectService: a encaminhar pedidos atraves do proxy configurado (curl -x).");
         }
-
-        CloseableHttpClient httpClient = httpClientBuilder.build();
-
-        // O dominio da DingConnect esta atras da Cloudflare, que bloqueia com 403 pedidos sem
-        // User-Agent de browser (o mesmo aconteceu ao buscar os logos das operadoras).
-        this.restClient = RestClient.builder()
-                .baseUrl(baseUrl)
-                .requestFactory(new HttpComponentsClientHttpRequestFactory(httpClient))
-                .defaultHeader("User-Agent", "Mozilla/5.0 (compatible; LusoTop/1.0)")
-                .build();
     }
 
     public DingConnectTransferResult sendTransfer(
@@ -101,27 +64,35 @@ public class DingConnectService {
             String accountNumber,
             String distributorRef
     ) {
-        Map<String, Object> body = Map.of(
-                "SkuCode", skuCode,
-                "SendValue", sendValue,
-                "SendCurrencyIso", sendCurrencyIso,
-                "AccountNumber", accountNumber,
-                "DistributorRef", distributorRef,
-                "ValidateOnly", false
-        );
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("SkuCode", skuCode);
+        body.put("SendValue", sendValue);
+        body.put("SendCurrencyIso", sendCurrencyIso);
+        body.put("AccountNumber", accountNumber);
+        body.put("DistributorRef", distributorRef);
+        body.put("ValidateOnly", false);
 
         try {
-            SendTransferResponse response = restClient.post()
-                    .uri("/api/V1/SendTransfer")
-                    .header("api_key", apiKey)
-                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                    .body(body)
-                    .retrieve()
-                    .body(SendTransferResponse.class);
+            String jsonBody = MAPPER.writeValueAsString(body);
+            CurlResult result = executeCurl("/api/V1/SendTransfer", jsonBody);
 
-            if (response == null) {
-                return DingConnectTransferResult.failure("Resposta vazia da DingConnect.");
+            if (result.exitCode() != 0) {
+                log.error("curl falhou (exit {}) ao chamar DingConnect SendTransfer para sku={} distributorRef={}: {}",
+                        result.exitCode(), skuCode, distributorRef, result.output());
+                return DingConnectTransferResult.failure(
+                        truncate("Erro de comunicacao com a DingConnect (curl exit " + result.exitCode() + "): " + result.output())
+                );
             }
+
+            if (result.statusCode() < 200 || result.statusCode() >= 300) {
+                log.error("DingConnect SendTransfer devolveu HTTP {} para sku={} distributorRef={}: {}",
+                        result.statusCode(), skuCode, distributorRef, result.body());
+                return DingConnectTransferResult.failure(
+                        truncate("Erro de comunicacao com a DingConnect: " + result.statusCode() + " " + result.body())
+                );
+            }
+
+            SendTransferResponse response = MAPPER.readValue(result.body(), SendTransferResponse.class);
 
             boolean success = response.resultCode() == 1
                     && response.transferRecord() != null
@@ -143,6 +114,64 @@ public class DingConnectService {
             log.error("Erro ao chamar DingConnect SendTransfer para sku={} distributorRef={}", skuCode, distributorRef, e);
             return DingConnectTransferResult.failure(truncate("Erro de comunicacao com a DingConnect: " + e.getMessage()));
         }
+    }
+
+    private CurlResult executeCurl(String path, String jsonBody) throws Exception {
+        List<String> command = new ArrayList<>();
+        command.add("curl");
+        command.add("-s");
+        command.add("-S");
+        command.add("-4");
+        command.add("--max-time");
+        command.add("25");
+        command.add("-w");
+        command.add("\n%{http_code}");
+        command.add("-X");
+        command.add("POST");
+        command.add(baseUrl + path);
+        command.add("-H");
+        command.add("User-Agent: Mozilla/5.0 (compatible; LusoTop/1.0)");
+        command.add("-H");
+        command.add("Content-Type: application/json");
+        command.add("-H");
+        command.add("api_key: " + apiKey);
+        if (proxyUrl != null) {
+            command.add("-x");
+            command.add(proxyUrl);
+        }
+        command.add("--data-binary");
+        command.add("@-");
+
+        ProcessBuilder processBuilder = new ProcessBuilder(command).redirectErrorStream(true);
+        Process process = processBuilder.start();
+        try (OutputStream stdin = process.getOutputStream()) {
+            stdin.write(jsonBody.getBytes(StandardCharsets.UTF_8));
+        }
+        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        boolean finished = process.waitFor(CURL_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+        if (!finished) {
+            process.destroyForcibly();
+            return new CurlResult(-1, -1, "timeout ao aguardar pelo curl", output);
+        }
+
+        int exitCode = process.exitValue();
+        if (exitCode != 0) {
+            return new CurlResult(exitCode, -1, output, output);
+        }
+
+        int lastNewline = output.lastIndexOf('\n');
+        String responseBody = lastNewline >= 0 ? output.substring(0, lastNewline) : "";
+        String statusText = (lastNewline >= 0 ? output.substring(lastNewline + 1) : output).trim();
+        int statusCode;
+        try {
+            statusCode = Integer.parseInt(statusText);
+        } catch (NumberFormatException e) {
+            return new CurlResult(exitCode, -1, "resposta inesperada do curl: " + output, output);
+        }
+        return new CurlResult(exitCode, statusCode, responseBody, output);
+    }
+
+    private record CurlResult(int exitCode, int statusCode, String body, String output) {
     }
 
     // orders.delivery_error e VARCHAR(500) -- uma resposta inesperada (ex: pagina de bloqueio da
