@@ -12,26 +12,26 @@ const TRUST_POINTS = [
 export function Hero() {
   return (
     <section
-      className="relative overflow-hidden bg-lusotop-navy"
+      className="relative overflow-hidden bg-lusotop-cream"
       style={{
         backgroundImage:
-          "radial-gradient(ellipse 70% 60% at 10% 0%, oklch(0.32 0.1 149 / 55%), transparent 60%)",
+          "radial-gradient(ellipse 70% 60% at 10% 0%, oklch(0.32 0.1 149 / 12%), transparent 60%)",
       }}
     >
       <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
           <div>
-            <h1 className="font-heading text-5xl leading-[1.05] font-semibold text-white sm:text-6xl">
+            <h1 className="font-heading text-5xl leading-[1.05] font-semibold text-foreground sm:text-6xl">
               Envie recargas para países de{" "}
               <span className="text-primary italic">língua portuguesa</span>
             </h1>
 
-            <p className="mt-6 max-w-md text-lg text-white/70">
+            <p className="mt-6 max-w-md text-lg text-muted-foreground">
               Recargas móveis rápidas e simples, onde quer que esteja. Todos
               os países da CPLP disponíveis.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/60">
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
               {TRUST_POINTS.map((point) => (
                 <span key={point.label} className="flex items-center gap-1.5">
                   <point.icon className="size-4 text-primary" />
