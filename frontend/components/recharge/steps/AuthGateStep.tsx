@@ -59,7 +59,7 @@ export function AuthGateStep({
         Entra ou cria conta para continuar
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        A tua recarga fica guardada — não perdes nada do que já escolheste.
+        A tua recarga fica guardada. Não perdes nada do que já escolheste.
       </p>
 
       <div className="mt-4">

@@ -150,7 +150,7 @@ function OrderCard({ order }: { order: OrderSummary }) {
           <>
             <AlertTriangle className="size-4 text-destructive" />
             <span className="text-foreground">
-              Problema na entrega{order.refunded ? " — reembolsado" : ""}
+              Problema na entrega{order.refunded ? " (reembolsado)" : ""}
             </span>
           </>
         )}

@@ -27,7 +27,7 @@ const BENEFITS = [
     icon: BadgeCheck,
     title: "Confirmação garantida",
     description:
-      "Só mostramos a recarga como concluída depois de a operadora confirmar a entrega — nunca antes.",
+      "Só mostramos a recarga como concluída depois de a operadora confirmar a entrega, nunca antes.",
     tone: "amber",
   },
   {

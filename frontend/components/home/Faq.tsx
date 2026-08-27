@@ -7,7 +7,7 @@ const FAQS = [
   {
     question: "Preciso de criar conta para pedir uma recarga?",
     answer:
-      "Podes escolher país, operadora, número e valor sem conta. Antes de pagar, pedimos para entrares ou criares conta — a recarga que já escolheste fica guardada e continuas exatamente onde ficaste.",
+      "Podes escolher país, operadora, número e valor sem conta. Antes de pagar, pedimos para entrares ou criares conta. A recarga que já escolheste fica guardada e continuas exatamente onde ficaste.",
   },
   {
     question: "Os meus dados de conta estão seguros?",
@@ -17,7 +17,7 @@ const FAQS = [
   {
     question: "E se o pagamento for feito mas a recarga falhar?",
     answer:
-      "Isso é raro, mas se acontecer, o valor pago é reembolsado automaticamente através da Stripe — não fica a tua conta a descoberto sem recarga.",
+      "Isso é raro, mas se acontecer, o valor pago é reembolsado automaticamente através da Stripe. Não fica a tua conta a descoberto sem recarga.",
   },
   {
     question: "Que países estão cobertos?",

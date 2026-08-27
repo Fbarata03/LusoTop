@@ -20,7 +20,7 @@ export default function PrivacidadePage() {
         guardamos os dados do pedido (país, operadora, número, valor) e
         identificadores da transação junto da Stripe e da DingConnect. Os
         dados do teu cartão são inseridos diretamente na página segura da
-        Stripe — nunca passam pelos nossos servidores nem são guardados por
+        Stripe. Nunca passam pelos nossos servidores nem são guardados por
         nós.
       </p>
 
