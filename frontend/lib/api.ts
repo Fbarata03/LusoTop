@@ -113,7 +113,7 @@ async function request<T>(
     throw new ApiError(body?.message ?? `Erro ao contactar a API (${response.status}).`);
   }
 
-  const data = await response.json();
+  const data = response.status === 204 ? undefined : await response.json();
   const parsed = schema.safeParse(data);
   if (!parsed.success) {
     throw new ApiError("Resposta inesperada da API.");
@@ -203,6 +203,32 @@ export function fetchMyOrders(): Promise<OrderSummary[]> {
   });
 }
 
+export async function downloadReceipt(orderId: number): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/api/orders/${orderId}/receipt`, {
+      headers: authHeaders(),
+    });
+  } catch {
+    throw new ApiError("Não foi possível ligar ao servidor.");
+  }
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new ApiError(body?.message ?? "Não foi possível obter o comprovativo.");
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `lusotop-comprovativo-${orderId}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 const adminDashboardSchema = z.object({
   totalCustomers: z.number(),
   totalOrders: z.number(),
@@ -257,4 +283,39 @@ export function fetchAdminOrders(): Promise<AdminOrder[]> {
 
 export function fetchAdminCustomers(): Promise<AdminCustomer[]> {
   return request("/api/admin/customers", z.array(adminCustomerSchema), { headers: authHeaders() });
+}
+
+const notificationSchema = z.object({
+  id: z.number(),
+  type: z.enum(["RECHARGE_DELIVERED", "RECHARGE_FAILED"]),
+  title: z.string(),
+  message: z.string(),
+  read: z.boolean(),
+  orderId: z.number().nullable(),
+  createdAt: z.string(),
+});
+export type NotificationItem = z.infer<typeof notificationSchema>;
+
+export function fetchMyNotifications(): Promise<NotificationItem[]> {
+  return request("/api/notifications/mine", z.array(notificationSchema), { headers: authHeaders() });
+}
+
+export function fetchUnreadNotificationCount(): Promise<number> {
+  return request("/api/notifications/unread-count", z.object({ unread: z.number() }), {
+    headers: authHeaders(),
+  }).then((r) => r.unread);
+}
+
+export function markNotificationRead(id: number): Promise<void> {
+  return request(`/api/notifications/${id}/read`, z.unknown(), {
+    method: "POST",
+    headers: authHeaders(),
+  }).then(() => undefined);
+}
+
+export function markAllNotificationsRead(): Promise<void> {
+  return request("/api/notifications/read-all", z.unknown(), {
+    method: "POST",
+    headers: authHeaders(),
+  }).then(() => undefined);
 }

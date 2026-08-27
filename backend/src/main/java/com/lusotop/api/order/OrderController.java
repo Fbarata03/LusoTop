@@ -6,7 +6,10 @@ import com.lusotop.api.order.dto.OrderSummaryResponse;
 import com.lusotop.api.user.User;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,5 +45,15 @@ public class OrderController {
     @GetMapping("/mine")
     public List<OrderSummaryResponse> mine(@AuthenticationPrincipal User user) {
         return orderService.findMyOrders(user);
+    }
+
+    @GetMapping("/{id}/receipt")
+    public ResponseEntity<byte[]> receipt(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        byte[] pdf = orderService.generateReceipt(id, user);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename("lusotop-comprovativo-" + id + ".pdf").build().toString())
+                .body(pdf);
     }
 }

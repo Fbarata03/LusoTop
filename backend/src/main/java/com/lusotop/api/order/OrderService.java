@@ -7,6 +7,7 @@ import com.lusotop.api.country.CountryRepository;
 import com.lusotop.api.currency.ExchangeRateService;
 import com.lusotop.api.delivery.DingConnectService;
 import com.lusotop.api.delivery.DingConnectTransferResult;
+import com.lusotop.api.notification.NotificationService;
 import com.lusotop.api.operator.Operator;
 import com.lusotop.api.operator.OperatorRepository;
 import com.lusotop.api.order.dto.CreateOrderRequest;
@@ -41,6 +42,8 @@ public class OrderService {
     private final AirtimeProductRepository productRepository;
     private final ExchangeRateService exchangeRateService;
     private final DingConnectService dingConnectService;
+    private final NotificationService notificationService;
+    private final ReceiptService receiptService;
 
     @Value("${app.stripe.success-url}")
     private String successUrl;
@@ -54,7 +57,9 @@ public class OrderService {
             OperatorRepository operatorRepository,
             AirtimeProductRepository productRepository,
             ExchangeRateService exchangeRateService,
-            DingConnectService dingConnectService
+            DingConnectService dingConnectService,
+            NotificationService notificationService,
+            ReceiptService receiptService
     ) {
         this.orderRepository = orderRepository;
         this.countryRepository = countryRepository;
@@ -62,6 +67,8 @@ public class OrderService {
         this.productRepository = productRepository;
         this.exchangeRateService = exchangeRateService;
         this.dingConnectService = dingConnectService;
+        this.notificationService = notificationService;
+        this.receiptService = receiptService;
     }
 
     public CreateOrderResponse createOrder(CreateOrderRequest request, User user) {
@@ -145,6 +152,16 @@ public class OrderService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public byte[] generateReceipt(Long orderId, User user) {
+        Order order = orderRepository.findByIdAndUserId(orderId, user.getId())
+                .orElseThrow(() -> new NotFoundException("ORDER_NOT_FOUND", "Pedido não encontrado."));
+        if (order.getDeliveryStatus() != DeliveryStatus.DELIVERED) {
+            throw new BadRequestException("ORDER_NOT_DELIVERED", "O comprovativo só está disponível depois da recarga ser entregue.");
+        }
+        return receiptService.generate(order);
+    }
+
     @Transactional
     public void handleCheckoutCompleted(String sessionId) {
         Order order = orderRepository.findByStripeCheckoutSessionId(sessionId)
@@ -176,6 +193,7 @@ public class OrderService {
             order.setDeliveryError("Produto sem SKU DingConnect configurado.");
             log.error("Paid order {} has no DingConnect SKU mapped for product {}", order.getId(), product.getId());
             refundFailedDelivery(order);
+            notificationService.notifyRechargeFailed(order);
             return;
         }
 
@@ -194,11 +212,13 @@ public class OrderService {
             order.setDeliveryStatus(DeliveryStatus.DELIVERED);
             order.setDingconnectTransferRef(result.transferRef());
             order.setDeliveryError(null);
+            notificationService.notifyRechargeDelivered(order);
         } else {
             order.setDeliveryStatus(DeliveryStatus.FAILED);
             order.setDeliveryError(result.errorMessage());
             log.error("Paid order {} could not be delivered: {}", order.getId(), result.errorMessage());
             refundFailedDelivery(order);
+            notificationService.notifyRechargeFailed(order);
         }
     }
 

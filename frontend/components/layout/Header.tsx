@@ -7,6 +7,7 @@ import { Menu, X, User as UserIcon } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { LogoMark } from "@/components/illustrations/LogoMark";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +52,8 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle className="hidden md:flex" />
+
+          {!loading && user && <NotificationBell />}
 
           {!loading && user ? (
             <div className="hidden items-center gap-3 sm:flex">

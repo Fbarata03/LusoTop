@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Download, Loader2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { FlagIcon } from "@/components/ui/flag-icon";
 import { OperatorLogo } from "@/components/ui/operator-logo";
 import { useAuth } from "@/lib/auth-context";
-import { ApiError, fetchMyOrders } from "@/lib/api";
+import { ApiError, downloadReceipt, fetchMyOrders } from "@/lib/api";
 import type { OrderSummary } from "@/lib/types";
 
 export default function MinhasRecargasPage() {
@@ -79,6 +80,20 @@ function OrderCard({ order }: { order: OrderSummary }) {
   const delivered = order.status === "PAID" && order.deliveryStatus === "DELIVERED";
   const failed = order.status === "PAID" && order.deliveryStatus === "FAILED";
   const processing = order.status === "PAID" && order.deliveryStatus === "PENDING";
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  async function handleDownload() {
+    setDownloadError(null);
+    setDownloading(true);
+    try {
+      await downloadReceipt(order.id);
+    } catch (err) {
+      setDownloadError(err instanceof ApiError ? err.message : "Não foi possível descarregar.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <Card className="p-4">
@@ -115,6 +130,20 @@ function OrderCard({ order }: { order: OrderSummary }) {
           <>
             <CheckCircle2 className="size-4 text-primary" />
             <span className="text-foreground">Recarga concluída</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto h-7 gap-1 text-xs"
+              onClick={handleDownload}
+              disabled={downloading}
+            >
+              {downloading ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Download className="size-3.5" />
+              )}
+              Comprovativo
+            </Button>
           </>
         )}
         {failed && (
@@ -138,6 +167,10 @@ function OrderCard({ order }: { order: OrderSummary }) {
           </>
         )}
       </div>
+
+      {downloadError && (
+        <p className="mt-2 text-xs text-destructive">{downloadError}</p>
+      )}
     </Card>
   );
 }
