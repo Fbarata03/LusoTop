@@ -86,6 +86,12 @@ public class Order {
     @Column(name = "delivery_error")
     private String deliveryError;
 
+    @Column(nullable = false)
+    private boolean refunded;
+
+    @Column(name = "stripe_refund_id")
+    private String stripeRefundId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

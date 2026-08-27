@@ -163,6 +163,8 @@ public class OrderService {
         if (product.getDingconnectSkuCode() == null || product.getDingconnectSkuCode().isBlank()) {
             order.setDeliveryStatus(DeliveryStatus.FAILED);
             order.setDeliveryError("Produto sem SKU DingConnect configurado.");
+            log.error("Paid order {} has no DingConnect SKU mapped for product {}", order.getId(), product.getId());
+            refundFailedDelivery(order);
             return;
         }
 
@@ -185,6 +187,23 @@ public class OrderService {
             order.setDeliveryStatus(DeliveryStatus.FAILED);
             order.setDeliveryError(result.errorMessage());
             log.error("Paid order {} could not be delivered: {}", order.getId(), result.errorMessage());
+            refundFailedDelivery(order);
+        }
+    }
+
+    private void refundFailedDelivery(Order order) {
+        if (order.isRefunded() || order.getStripePaymentIntentId() == null) return;
+        try {
+            Refund refund = Refund.create(
+                    RefundCreateParams.builder()
+                            .setPaymentIntent(order.getStripePaymentIntentId())
+                            .build()
+            );
+            order.setRefunded(true);
+            order.setStripeRefundId(refund.getId());
+        } catch (StripeException e) {
+            log.error("Automatic refund failed for order {} (payment_intent={})",
+                    order.getId(), order.getStripePaymentIntentId(), e);
         }
     }
 
