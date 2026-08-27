@@ -79,6 +79,12 @@ DINGCONNECT_API_KEY=...
 Sem estas variáveis a criação da sessão de checkout falha (`STRIPE_ERROR`) e a entrega da recarga
 falha (sem `DINGCONNECT_API_KEY`), mas o resto da aplicação continua a funcionar.
 
+A DingConnect exige que os pedidos em modo Live venham de um IP fixo autorizado por eles
+(confirmado pelo suporte deles por email — não aceitam autenticação só por API key). Se o
+backend não tiver IP de saída fixo (ex: Render sem add-on de IP dedicado, que só está disponível
+em planos caros), define `DINGCONNECT_PROXY_URL=http://user:pass@host:porta` para encaminhar as
+chamadas através de um proxy HTTP num servidor com IP fixo, e autoriza esse IP na DingConnect.
+
 Verificação rápida:
 
 ```bash
