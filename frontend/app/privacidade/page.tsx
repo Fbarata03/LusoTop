@@ -42,13 +42,6 @@ export default function PrivacidadePage() {
         Europeia.
       </p>
 
-      <h2 className="mt-8 font-heading text-xl font-semibold text-foreground">
-        4. Contacto
-      </h2>
-      <p className="mt-3 leading-relaxed">
-        Para questões sobre os teus dados, contacta-nos através dos canais
-        indicados na secção de Ajuda.
-      </p>
     </LegalPage>
   );
 }

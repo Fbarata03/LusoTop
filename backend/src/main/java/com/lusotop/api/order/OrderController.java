@@ -5,6 +5,7 @@ import com.lusotop.api.order.dto.CreateOrderResponse;
 import com.lusotop.api.order.dto.OrderSummaryResponse;
 import com.lusotop.api.user.User;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,5 +37,10 @@ public class OrderController {
     @GetMapping("/session/{sessionId}")
     public OrderSummaryResponse confirm(@PathVariable String sessionId) {
         return orderService.confirmOrder(sessionId);
+    }
+
+    @GetMapping("/mine")
+    public List<OrderSummaryResponse> mine(@AuthenticationPrincipal User user) {
+        return orderService.findMyOrders(user);
     }
 }

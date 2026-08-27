@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -64,6 +65,10 @@ public class OrderService {
     }
 
     public CreateOrderResponse createOrder(CreateOrderRequest request, User user) {
+        if (user == null) {
+            throw new BadRequestException("AUTH_REQUIRED", "É necessário iniciar sessão para continuar.");
+        }
+
         Country country = countryRepository.findByIsoCodeIgnoreCase(request.countryIso())
                 .orElseThrow(() -> new NotFoundException("COUNTRY_NOT_FOUND", "País não encontrado."));
 
@@ -132,6 +137,12 @@ public class OrderService {
         }
 
         return OrderSummaryResponse.from(order);
+    }
+
+    public List<OrderSummaryResponse> findMyOrders(User user) {
+        return orderRepository.findAllByUserIdOrderByCreatedAtDesc(user.getId()).stream()
+                .map(OrderSummaryResponse::from)
+                .toList();
     }
 
     @Transactional

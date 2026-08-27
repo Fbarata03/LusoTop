@@ -7,6 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { FlagIcon } from "@/components/ui/flag-icon";
 import { OperatorLogo } from "@/components/ui/operator-logo";
 import { ApiError, createOrder, fetchExchangeRate } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import { AuthGateStep } from "./AuthGateStep";
 import type { Country, Operator, Product } from "@/lib/types";
 
 export function ResumoStep({
@@ -24,11 +26,13 @@ export function ResumoStep({
   onBack: () => void;
   onRestart: () => void;
 }) {
+  const { user } = useAuth();
   const hasRealPrice = product.payerAmountEur !== null;
   const [rate, setRate] = useState<number | null>(null);
   const [loadingRate, setLoadingRate] = useState(!hasRealPrice);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+  const [showAuthGate, setShowAuthGate] = useState(false);
 
   const payerAmount = hasRealPrice
     ? product.payerAmountEur!
@@ -64,7 +68,7 @@ export function ResumoStep({
     };
   }, [product.currency, hasRealPrice]);
 
-  async function handlePay() {
+  async function submitOrder() {
     setPayError(null);
     setPaying(true);
     try {
@@ -81,6 +85,23 @@ export function ResumoStep({
       );
       setPaying(false);
     }
+  }
+
+  function handlePay() {
+    if (!user) {
+      setShowAuthGate(true);
+      return;
+    }
+    submitOrder();
+  }
+
+  if (showAuthGate) {
+    return (
+      <AuthGateStep
+        onSuccess={submitOrder}
+        onBack={() => setShowAuthGate(false)}
+      />
+    );
   }
 
   return (

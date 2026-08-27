@@ -60,4 +60,5 @@ export interface OrderSummary {
   productCurrency: string;
   payerAmount: number;
   payerCurrency: string;
+  createdAt: string;
 }

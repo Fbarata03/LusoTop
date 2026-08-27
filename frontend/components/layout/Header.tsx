@@ -54,10 +54,13 @@ export function Header() {
 
           {!loading && user ? (
             <div className="hidden items-center gap-3 sm:flex">
-              <span className="flex items-center gap-1.5 text-sm text-white/80">
+              <Link
+                href="/minhas-recargas"
+                className="flex items-center gap-1.5 text-sm text-white/80 transition-colors hover:text-white"
+              >
                 <UserIcon className="size-4 text-primary" />
                 {user.name.split(" ")[0]}
-              </span>
+              </Link>
               <Button
                 variant="ghost"
                 onClick={handleLogout}
@@ -115,13 +118,25 @@ export function Header() {
           <div className="mt-2 flex items-center gap-2 border-t border-white/10 pt-3">
             <ThemeToggle />
             {user ? (
-              <Button
-                variant="ghost"
-                onClick={handleLogout}
-                className="flex-1 text-white hover:bg-white/10 hover:text-white"
-              >
-                Sair ({user.name.split(" ")[0]})
-              </Button>
+              <>
+                <Link
+                  href="/minhas-recargas"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    buttonVariants({ variant: "ghost" }),
+                    "flex-1 text-white hover:bg-white/10 hover:text-white"
+                  )}
+                >
+                  Minhas recargas
+                </Link>
+                <Button
+                  variant="ghost"
+                  onClick={handleLogout}
+                  className="flex-1 text-white hover:bg-white/10 hover:text-white"
+                >
+                  Sair
+                </Button>
+              </>
             ) : (
               <>
                 <Link

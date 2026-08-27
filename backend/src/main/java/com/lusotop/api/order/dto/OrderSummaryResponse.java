@@ -3,6 +3,7 @@ package com.lusotop.api.order.dto;
 import com.lusotop.api.order.Order;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 public record OrderSummaryResponse(
         Long id,
@@ -17,7 +18,8 @@ public record OrderSummaryResponse(
         BigDecimal productAmount,
         String productCurrency,
         BigDecimal payerAmount,
-        String payerCurrency
+        String payerCurrency,
+        Instant createdAt
 ) {
 
     public static OrderSummaryResponse from(Order order) {
@@ -34,7 +36,8 @@ public record OrderSummaryResponse(
                 order.getProductAmount(),
                 order.getProductCurrency(),
                 order.getPayerAmount(),
-                order.getPayerCurrency()
+                order.getPayerCurrency(),
+                order.getCreatedAt()
         );
     }
 }

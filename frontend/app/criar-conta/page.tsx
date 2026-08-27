@@ -49,7 +49,7 @@ export default function CriarContaPage() {
             Criar conta
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Acompanha o histórico das tuas recargas.
+            Cria a tua conta LusoTop.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">

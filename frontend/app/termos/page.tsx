@@ -36,8 +36,7 @@ export default function TermosPage() {
       </h2>
       <p className="mt-3 leading-relaxed">
         És responsável por manteres a tua password em segurança e por todas
-        as ações realizadas com a tua conta. Podes pedir o encerramento da
-        tua conta a qualquer momento contactando-nos.
+        as ações realizadas com a tua conta.
       </p>
 
       <h2 className="mt-8 font-heading text-xl font-semibold text-foreground">
@@ -48,13 +47,6 @@ export default function TermosPage() {
         vamos assinalar aqui qualquer alteração relevante.
       </p>
 
-      <h2 className="mt-8 font-heading text-xl font-semibold text-foreground">
-        5. Contacto
-      </h2>
-      <p className="mt-3 leading-relaxed">
-        Para questões sobre estes termos, usa os canais indicados na secção
-        de Ajuda.
-      </p>
     </LegalPage>
   );
 }

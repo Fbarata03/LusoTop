@@ -7,7 +7,7 @@ const FAQS = [
   {
     question: "Preciso de criar conta para pedir uma recarga?",
     answer:
-      "Não. Podes percorrer o fluxo de recarga e pagar sem sessão iniciada.",
+      "Podes escolher país, operadora, número e valor sem conta. Antes de pagar, pedimos para entrares ou criares conta — a recarga que já escolheste fica guardada e continuas exatamente onde ficaste.",
   },
   {
     question: "Os meus dados de conta estão seguros?",

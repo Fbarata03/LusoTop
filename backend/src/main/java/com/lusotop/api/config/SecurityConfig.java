@@ -15,8 +15,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 /**
- * GETs de countries/operators/products e o registo/login sao publicos.
- * Tudo o resto exige um JWT valido (ver JwtAuthenticationFilter).
+ * GETs de countries/operators/products, registo/login, a confirmacao de pedido por
+ * stripe_checkout_session_id (pagina de sucesso pos-pagamento) e o webhook da Stripe (que nao
+ * envia nenhum Bearer token, apenas a assinatura validada em StripeWebhookController) sao
+ * publicos. Tudo o resto -- incluindo criar um pedido -- exige um JWT valido (ver
+ * JwtAuthenticationFilter).
  */
 @Configuration
 public class SecurityConfig {
@@ -44,7 +47,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/countries/**", "/api/operators/**", "/api/currency/**").permitAll()
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                        .requestMatchers("/api/orders/**").permitAll()
+                        .requestMatchers("/api/orders/session/**").permitAll()
+                        .requestMatchers("/api/webhooks/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedEntryPoint()))

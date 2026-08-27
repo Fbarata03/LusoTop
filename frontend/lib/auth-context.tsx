@@ -8,10 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { fetchMe, loginUser, registerUser } from "./api";
+import { fetchMe, loginUser, registerUser, TOKEN_KEY } from "./api";
 import type { User } from "./types";
-
-const TOKEN_KEY = "lusotop_token";
 
 interface AuthContextValue {
   user: User | null;

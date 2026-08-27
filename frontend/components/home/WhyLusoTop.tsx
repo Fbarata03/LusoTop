@@ -1,4 +1,4 @@
-import { Zap, Lock, Globe2, BadgeCheck, ShieldQuestion, MessageCircle } from "lucide-react";
+import { Zap, Lock, Globe2, BadgeCheck, ShieldQuestion, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const BENEFITS = [
@@ -27,7 +27,7 @@ const BENEFITS = [
     icon: BadgeCheck,
     title: "Confirmação garantida",
     description:
-      "Recebe um comprovativo por email para cada recarga. Rastreie o estado de todas as suas transações.",
+      "Só mostramos a recarga como concluída depois de a operadora confirmar a entrega — nunca antes.",
     tone: "amber",
   },
   {
@@ -38,10 +38,10 @@ const BENEFITS = [
     tone: "green",
   },
   {
-    icon: MessageCircle,
-    title: "Suporte dedicado",
+    icon: RotateCcw,
+    title: "Reembolso automático",
     description:
-      "A nossa equipa fala português e está disponível para ajudar em qualquer dificuldade.",
+      "Se a recarga não puder ser entregue depois do pagamento confirmado, o valor é devolvido automaticamente.",
     tone: "amber",
   },
 ] as const;

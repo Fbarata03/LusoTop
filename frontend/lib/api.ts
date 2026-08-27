@@ -3,6 +3,13 @@ import type { AuthResult, Country, Operator, OrderSummary, Product, User } from 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
+export const TOKEN_KEY = "lusotop_token";
+
+function authHeaders(): Record<string, string> {
+  const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 const countrySchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -71,6 +78,7 @@ const orderSummarySchema = z.object({
   productCurrency: z.string(),
   payerAmount: z.number(),
   payerCurrency: z.string(),
+  createdAt: z.string(),
 });
 
 export class ApiError extends Error {
@@ -170,6 +178,7 @@ export function createOrder(payload: {
 }): Promise<{ orderId: number; checkoutUrl: string }> {
   return request("/api/orders", createOrderResponseSchema, {
     method: "POST",
+    headers: authHeaders(),
     body: JSON.stringify(payload),
   });
 }
@@ -179,4 +188,10 @@ export function confirmOrder(sessionId: string): Promise<OrderSummary> {
     `/api/orders/session/${encodeURIComponent(sessionId)}`,
     orderSummarySchema
   );
+}
+
+export function fetchMyOrders(): Promise<OrderSummary[]> {
+  return request("/api/orders/mine", z.array(orderSummarySchema), {
+    headers: authHeaders(),
+  });
 }
