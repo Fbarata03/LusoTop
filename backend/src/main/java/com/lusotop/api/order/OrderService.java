@@ -112,10 +112,14 @@ public class OrderService {
         Order order = orderRepository.findByStripeCheckoutSessionId(sessionId)
                 .orElseThrow(() -> new NotFoundException("ORDER_NOT_FOUND", "Pedido não encontrado."));
 
-        if (order.getStatus() == OrderStatus.PENDING) {
+        if (order.getStatus() == OrderStatus.PENDING
+                || (order.getStatus() == OrderStatus.PAID
+                && order.getDeliveryStatus() == DeliveryStatus.PENDING)) {
             try {
                 Session session = Session.retrieve(sessionId);
-                if ("paid".equals(session.getPaymentStatus())) {
+                if (order.getStatus() == OrderStatus.PENDING && "paid".equals(session.getPaymentStatus())) {
+                    markPaidAndDeliver(order, session);
+                } else if (order.getStatus() == OrderStatus.PAID) {
                     markPaidAndDeliver(order, session);
                 } else if ("expired".equals(session.getStatus())) {
                     order.setStatus(OrderStatus.FAILED);
