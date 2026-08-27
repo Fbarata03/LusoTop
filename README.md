@@ -125,6 +125,6 @@ backend recusa `POST /api/orders` sem utilizador autenticado.
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): arquitetura, modelo ER, endpoints
 
-## Licença
+## Licença.
 
 Software proprietário. Todos os direitos reservados. Ver [LICENSE](LICENSE).
