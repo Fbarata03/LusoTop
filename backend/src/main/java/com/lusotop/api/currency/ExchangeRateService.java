@@ -41,7 +41,7 @@ public class ExchangeRateService {
     private volatile Instant cacheTimestamp = Instant.EPOCH;
 
     public ExchangeRateService() {
-        this.frankfurterClient = RestClient.builder().baseUrl("https://api.frankfurter.app").build();
+        this.frankfurterClient = RestClient.builder().baseUrl("https://api.frankfurter.dev/v1").build();
         this.openErApiClient = RestClient.builder().baseUrl("https://open.er-api.com/v6").build();
     }
 
