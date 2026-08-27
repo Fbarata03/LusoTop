@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Info, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { FlagIcon } from "@/components/ui/flag-icon";
@@ -153,17 +153,6 @@ export function ResumoStep({
           {hasRealPrice
             ? "Valor final, sem surpresas no pagamento."
             : "Estimativa com taxas de câmbio atuais. O valor final é confirmado antes do pagamento."}
-        </p>
-      </div>
-
-      <div className="mt-4 flex gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm text-foreground">
-        <Info className="mt-0.5 size-4 shrink-0 text-primary" />
-        <p>
-          <strong>Pré-lançamento.</strong> O pagamento por cartão já é
-          processado a sério pelo Stripe. O envio automático da recarga para
-          o número ainda está a ser ligado ao fornecedor de airtime. Por
-          agora, o pagamento confirma o pedido, mas a entrega é o próximo
-          passo desta fase.
         </p>
       </div>
 

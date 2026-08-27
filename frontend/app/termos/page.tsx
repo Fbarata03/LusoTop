@@ -21,14 +21,14 @@ export default function TermosPage() {
       </p>
 
       <h2 className="mt-8 font-heading text-xl font-semibold text-foreground">
-        2. Fase atual: pré-lançamento
+        2. Pagamentos e recargas
       </h2>
       <p className="mt-3 leading-relaxed">
-        O registo, o login e a navegação pela plataforma já funcionam em
-        produção. A ligação a fornecedores de pagamento e de airtime está a
-        ser finalizada. Enquanto essa fase não abrir, nenhum valor é
-        cobrado e nenhuma recarga real é enviada, mesmo que completes o
-        fluxo de recarga até ao fim.
+        Os pagamentos são processados pela Stripe e cobrados de imediato. A
+        recarga é enviada logo após a confirmação do pagamento. Se, por
+        algum motivo, a recarga não puder ser entregue depois de o
+        pagamento ser confirmado, o valor pago é reembolsado
+        automaticamente através da Stripe.
       </p>
 
       <h2 className="mt-8 font-heading text-xl font-semibold text-foreground">
@@ -44,9 +44,8 @@ export default function TermosPage() {
         4. Alterações a estes termos
       </h2>
       <p className="mt-3 leading-relaxed">
-        Vamos atualizar estes termos à medida que novas funcionalidades
-        (pagamento, airtime, reembolsos) entrarem em produção, e assinalar
-        aqui qualquer alteração relevante.
+        Podemos atualizar estes termos à medida que a plataforma evolui, e
+        vamos assinalar aqui qualquer alteração relevante.
       </p>
 
       <h2 className="mt-8 font-heading text-xl font-semibold text-foreground">

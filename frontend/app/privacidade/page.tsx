@@ -16,10 +16,12 @@ export default function PrivacidadePage() {
       </h2>
       <p className="mt-3 leading-relaxed">
         Ao criares conta, guardamos o teu nome, email e password (protegida
-        com hash BCrypt, nunca em texto simples). A LusoTop está em
-        pré-lançamento: enquanto a ligação a fornecedores de pagamento e de
-        airtime não estiver ativa, não recolhemos nem processamos nenhum
-        dado de pagamento.
+        com hash BCrypt, nunca em texto simples). Quando fazes uma recarga,
+        guardamos os dados do pedido (país, operadora, número, valor) e
+        identificadores da transação junto da Stripe e da DingConnect. Os
+        dados do teu cartão são inseridos diretamente na página segura da
+        Stripe — nunca passam pelos nossos servidores nem são guardados por
+        nós.
       </p>
 
       <h2 className="mt-8 font-heading text-xl font-semibold text-foreground">
@@ -37,8 +39,7 @@ export default function PrivacidadePage() {
       <p className="mt-3 leading-relaxed">
         Podes pedir acesso, correção ou eliminação dos teus dados pessoais a
         qualquer momento, incluindo ao abrigo do RGPD se estiveres na União
-        Europeia. Assim que os pagamentos reais entrarem em produção,
-        publicamos aqui a política completa sobre dados financeiros.
+        Europeia.
       </p>
 
       <h2 className="mt-8 font-heading text-xl font-semibold text-foreground">
