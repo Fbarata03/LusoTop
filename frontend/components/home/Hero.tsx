@@ -18,7 +18,7 @@ const TRUST_POINTS = [
 export function Hero() {
   return (
     <section
-      className="relative overflow-hidden bg-lusotop-cream"
+      className="relative overflow-hidden bg-lusotop-cream dark:bg-lusotop-navy"
       style={{
         backgroundImage:
           "radial-gradient(ellipse 70% 60% at 10% 0%, oklch(0.32 0.1 149 / 12%), transparent 60%)",

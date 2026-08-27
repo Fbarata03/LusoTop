@@ -36,7 +36,7 @@ export default function EntrarPage() {
   return (
     <div className="flex flex-1 flex-col">
       <Header />
-      <main className="flex flex-1 items-center justify-center bg-lusotop-cream px-4 py-16">
+      <main className="flex flex-1 items-center justify-center bg-lusotop-cream px-4 py-16 dark:bg-lusotop-navy">
         <Card className="w-full max-w-sm p-6">
           <h1 className="font-heading text-2xl font-semibold text-foreground">
             Entrar

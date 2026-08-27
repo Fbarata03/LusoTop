@@ -28,7 +28,7 @@ const FAQS = [
 
 export function Faq() {
   return (
-    <section id="ajuda" className="bg-lusotop-cream py-24">
+    <section id="ajuda" className="bg-lusotop-cream py-24 dark:bg-lusotop-navy">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <p className="text-sm font-semibold tracking-wide text-primary uppercase">
           Ajuda

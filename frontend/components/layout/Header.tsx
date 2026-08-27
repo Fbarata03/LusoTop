@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Menu, X, User as UserIcon } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { LogoMark } from "@/components/illustrations/LogoMark";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,8 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle className="hidden md:flex" />
+
           {!loading && user ? (
             <div className="hidden items-center gap-3 sm:flex">
               <span className="flex items-center gap-1.5 text-sm text-white/80">
@@ -109,7 +112,8 @@ export function Header() {
               {link.label}
             </a>
           ))}
-          <div className="mt-2 flex gap-2 border-t border-white/10 pt-3">
+          <div className="mt-2 flex items-center gap-2 border-t border-white/10 pt-3">
+            <ThemeToggle />
             {user ? (
               <Button
                 variant="ghost"

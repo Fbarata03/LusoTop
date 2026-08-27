@@ -138,7 +138,7 @@ export default function SucessoPage() {
   return (
     <div className="flex flex-1 flex-col">
       <Header />
-      <main className="flex flex-1 items-center justify-center bg-lusotop-cream px-4 py-16">
+      <main className="flex flex-1 items-center justify-center bg-lusotop-cream px-4 py-16 dark:bg-lusotop-navy">
         <Suspense
           fallback={<Loader2 className="size-10 animate-spin text-primary" />}
         >
