@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderService {
@@ -106,6 +107,7 @@ public class OrderService {
         return new CreateOrderResponse(order.getId(), session.getUrl());
     }
 
+    @Transactional
     public OrderSummaryResponse confirmOrder(String sessionId) {
         Order order = orderRepository.findByStripeCheckoutSessionId(sessionId)
                 .orElseThrow(() -> new NotFoundException("ORDER_NOT_FOUND", "Pedido não encontrado."));
@@ -114,8 +116,7 @@ public class OrderService {
             try {
                 Session session = Session.retrieve(sessionId);
                 if ("paid".equals(session.getPaymentStatus())) {
-                    order.setStatus(OrderStatus.PAID);
-                    order.setStripePaymentIntentId(session.getPaymentIntent());
+                    markPaidAndDeliver(order, session);
                 } else if ("expired".equals(session.getStatus())) {
                     order.setStatus(OrderStatus.FAILED);
                 }
@@ -127,6 +128,60 @@ public class OrderService {
         }
 
         return OrderSummaryResponse.from(order);
+    }
+
+    @Transactional
+    public void handleCheckoutCompleted(String sessionId) {
+        Order order = orderRepository.findByStripeCheckoutSessionId(sessionId)
+                .orElseThrow(() -> new NotFoundException("ORDER_NOT_FOUND", "Pedido não encontrado."));
+
+        if (order.getStatus() != OrderStatus.PENDING) return;
+
+        try {
+            Session session = Session.retrieve(sessionId);
+            if ("paid".equals(session.getPaymentStatus())) {
+                markPaidAndDeliver(order, session);
+                orderRepository.save(order);
+            }
+        } catch (StripeException e) {
+            log.error("Stripe session retrieval failed for webhook session {}", sessionId, e);
+            throw new BadRequestException("STRIPE_ERROR", "Não foi possível confirmar o pagamento junto do Stripe.");
+        }
+    }
+
+    private void markPaidAndDeliver(Order order, Session session) {
+        order.setStatus(OrderStatus.PAID);
+        order.setStripePaymentIntentId(session.getPaymentIntent());
+
+        if (order.getDeliveryStatus() == DeliveryStatus.DELIVERED) return;
+
+        AirtimeProduct product = order.getProduct();
+        if (product.getDingconnectSkuCode() == null || product.getDingconnectSkuCode().isBlank()) {
+            order.setDeliveryStatus(DeliveryStatus.FAILED);
+            order.setDeliveryError("Produto sem SKU DingConnect configurado.");
+            return;
+        }
+
+        boolean rangeProduct = product.isDingconnectSendValueRange();
+        BigDecimal sendValue = rangeProduct ? order.getPayerAmount() : order.getProductAmount();
+        String sendCurrency = rangeProduct ? order.getPayerCurrency() : order.getProductCurrency();
+        DingConnectTransferResult result = dingConnectService.sendTransfer(
+                product.getDingconnectSkuCode(),
+                sendValue,
+                sendCurrency,
+                order.getPhoneNumber(),
+                "lusotop-order-" + order.getId()
+        );
+
+        if (result.success()) {
+            order.setDeliveryStatus(DeliveryStatus.DELIVERED);
+            order.setDingconnectTransferRef(result.transferRef());
+            order.setDeliveryError(null);
+        } else {
+            order.setDeliveryStatus(DeliveryStatus.FAILED);
+            order.setDeliveryError(result.errorMessage());
+            log.error("Paid order {} could not be delivered: {}", order.getId(), result.errorMessage());
+        }
     }
 
     private Session createCheckoutSession(Order order, Operator operator, Country country, AirtimeProduct product) {
