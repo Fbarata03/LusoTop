@@ -14,4 +14,10 @@ EXPOSE 8080
 # consoante a ordem de inicializacao dos beans do Spring. Como flag de arranque da JVM garante
 # que fica ativo desde o inicio, sempre. Sem isto, pedidos autenticados atraves do proxy da
 # DingConnect falham sempre com 407, mesmo com credenciais corretas.
-ENTRYPOINT ["java", "-Djdk.http.auth.tunneling.disabledSchemes=", "-jar", "app.jar"]
+#
+# java.net.preferIPv4Stack=true: protecao extra -- um pedido real chegou a sair diretamente por
+# IPv6 do Render em vez de passar pelo proxy da DingConnect (bug de routing corrigido no
+# DingConnectService), o que contornou silenciosamente o proxy e foi bloqueado pela Cloudflare.
+# Com IPv6 desativado na JVM, qualquer futura falha de routing semelhante falha de forma limpa
+# (sem rota direta disponivel) em vez de escapar pela Cloudflare sem ninguem reparar.
+ENTRYPOINT ["java", "-Djdk.http.auth.tunneling.disabledSchemes=", "-Djava.net.preferIPv4Stack=true", "-jar", "app.jar"]

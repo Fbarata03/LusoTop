@@ -8,6 +8,7 @@ import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.routing.DefaultProxyRoutePlanner;
 import org.apache.hc.core5.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,12 @@ public class DingConnectService {
         if (proxyUrl != null && !proxyUrl.isBlank()) {
             URI proxy = URI.create(proxyUrl);
             HttpHost proxyHost = new HttpHost("http", proxy.getHost(), proxy.getPort());
-            httpClientBuilder.setProxy(proxyHost);
+            // setProxy() por si so demonstrou nao ser fiavel em producao -- um pedido real
+            // (order #30) confirmou-se, pelo IP devolvido na pagina de bloqueio da Cloudflare,
+            // ter saido diretamente via IPv6 do Render, sem passar pelo proxy. Definir o
+            // RoutePlanner explicitamente elimina qualquer ambiguidade no fallback interno do
+            // builder.
+            httpClientBuilder.setRoutePlanner(new DefaultProxyRoutePlanner(proxyHost));
 
             String[] userInfo = proxy.getUserInfo() != null ? proxy.getUserInfo().split(":", 2) : null;
             if (userInfo != null && userInfo.length == 2) {
