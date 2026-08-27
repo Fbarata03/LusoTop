@@ -9,7 +9,7 @@ Plataforma de recargas móveis internacionais para 7 países da CPLP com cobertu
 > O checkout usa a Stripe (Checkout Sessions + webhook assinado) e, após confirmação do
 > pagamento, a recarga é enviada de imediato através da API SendTransfer da DingConnect. Se a
 > entrega falhar depois do pagamento confirmado, o valor é reembolsado automaticamente pela
-> Stripe — ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+> Stripe ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Stack
 
