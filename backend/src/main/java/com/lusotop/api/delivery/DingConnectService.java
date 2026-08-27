@@ -64,11 +64,16 @@ public class DingConnectService {
             String accountNumber,
             String distributorRef
     ) {
+        // A DingConnect espera o AccountNumber so com digitos (sem "+", espacos ou outros
+        // caracteres) -- guardamos o numero no formato +244... para exibicao, mas enviamos aqui
+        // so os digitos.
+        String cleanAccountNumber = accountNumber == null ? null : accountNumber.replaceAll("[^0-9]", "");
+
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("SkuCode", skuCode);
         body.put("SendValue", sendValue);
         body.put("SendCurrencyIso", sendCurrencyIso);
-        body.put("AccountNumber", accountNumber);
+        body.put("AccountNumber", cleanAccountNumber);
         body.put("DistributorRef", distributorRef);
         body.put("ValidateOnly", false);
 
