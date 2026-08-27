@@ -16,7 +16,7 @@ const lora = Lora({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://lusotop.online"),
-  title: "LusoTop: Recargas para a comunidade lusófona",
+  title: "LusoTop | Recargas para a comunidade lusófona",
   description:
     "Recargas móveis rápidas e simples para os países da CPLP. Angola, Brasil, Cabo Verde, Guiné-Bissau, Moçambique, Portugal e São Tomé e Príncipe.",
   alternates: {
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     google: "WTsTt58-RwTSRIryDtQvWN_POEOUI5WQkTmmZiU2E94",
   },
   openGraph: {
-    title: "LusoTop: Recargas para a comunidade lusófona",
+    title: "LusoTop | Recargas para a comunidade lusófona",
     description:
       "Recargas móveis rápidas e simples para os países da CPLP. Todos os países da CPLP disponíveis.",
     url: "https://lusotop.online",
