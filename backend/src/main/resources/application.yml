@@ -29,6 +29,8 @@ app:
   jwt:
     secret: ${JWT_SECRET:lusotop-local-dev-secret-change-me-in-production-please-32chars-min}
     expiration-days: ${JWT_EXPIRATION_DAYS:7}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
   stripe:
     secret-key: ${STRIPE_SECRET_KEY:}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:}

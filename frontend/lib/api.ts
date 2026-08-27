@@ -157,6 +157,13 @@ export function loginUser(email: string, password: string): Promise<AuthResult> 
   });
 }
 
+export function loginWithGoogle(idToken: string): Promise<AuthResult> {
+  return request("/api/auth/google", authResultSchema, {
+    method: "POST",
+    body: JSON.stringify({ idToken }),
+  });
+}
+
 export function fetchMe(token: string): Promise<User> {
   return request("/api/auth/me", userSchema, {
     headers: { Authorization: `Bearer ${token}` },

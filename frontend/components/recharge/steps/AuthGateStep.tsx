@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
 
@@ -61,7 +62,17 @@ export function AuthGateStep({
         A tua recarga fica guardada — não perdes nada do que já escolheste.
       </p>
 
-      <div className="mt-4 flex gap-1.5 rounded-xl bg-muted p-1">
+      <div className="mt-4">
+        <GoogleSignInButton onSuccess={onSuccess} onError={setError} />
+      </div>
+
+      <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />
+        ou
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <div className="flex gap-1.5 rounded-xl bg-muted p-1">
         <button
           type="button"
           onClick={() => setMode("login")}

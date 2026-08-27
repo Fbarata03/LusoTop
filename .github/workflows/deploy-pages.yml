@@ -37,6 +37,7 @@ jobs:
       - run: npm run build
         env:
           NEXT_PUBLIC_API_URL: https://lusotop-api.onrender.com
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: 826958713069-61de115nojdp0nbqfllsh5v06mrgauql.apps.googleusercontent.com
 
       - uses: actions/configure-pages@v5
 

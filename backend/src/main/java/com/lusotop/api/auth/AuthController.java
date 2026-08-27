@@ -1,6 +1,7 @@
 package com.lusotop.api.auth;
 
 import com.lusotop.api.auth.dto.AuthResponse;
+import com.lusotop.api.auth.dto.GoogleLoginRequest;
 import com.lusotop.api.auth.dto.LoginRequest;
 import com.lusotop.api.auth.dto.RegisterRequest;
 import com.lusotop.api.auth.dto.UserResponse;
@@ -33,6 +34,11 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/google")
+    public AuthResponse google(@Valid @RequestBody GoogleLoginRequest request) {
+        return authService.loginWithGoogle(request.idToken());
     }
 
     @GetMapping("/me")

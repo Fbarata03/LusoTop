@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { fetchMe, loginUser, registerUser, TOKEN_KEY } from "./api";
+import { fetchMe, loginUser, loginWithGoogle, registerUser, TOKEN_KEY } from "./api";
 import type { User } from "./types";
 
 interface AuthContextValue {
@@ -16,6 +16,7 @@ interface AuthContextValue {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  loginGoogle: (idToken: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -58,13 +59,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const loginGoogle = useCallback(async (idToken: string) => {
+    const result = await loginWithGoogle(idToken);
+    localStorage.setItem(TOKEN_KEY, result.token);
+    setUser(result.user);
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );
