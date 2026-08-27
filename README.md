@@ -15,7 +15,7 @@ Plataforma de recargas móveis internacionais para 7 países da CPLP com cobertu
 
 - **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui
 - **Backend**: Spring Boot 3, Java 21, Spring Data JPA, Flyway
-- **Base de dados**: Neon PostgreSQL (projeto `LusoTop`, região `eu-west-2`)
+- **Base de dados**: Neon PostgreSQL (projeto `LusoTop` região `eu-west-2`)
 
 ## Estrutura
 
