@@ -39,3 +39,4 @@ app:
   dingconnect:
     api-key: ${DINGCONNECT_API_KEY:}
     base-url: ${DINGCONNECT_BASE_URL:https://api.dingconnect.com}
+    proxy-url: ${DINGCONNECT_PROXY_URL:}

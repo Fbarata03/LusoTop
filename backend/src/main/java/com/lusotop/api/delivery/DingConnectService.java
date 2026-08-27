@@ -4,9 +4,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.net.Authenticator;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.ProxySelector;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.net.http.HttpClient;
+import java.nio.charset.StandardCharsets;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -28,11 +37,46 @@ public class DingConnectService {
     @Value("${app.dingconnect.api-key}")
     private String apiKey;
 
-    public DingConnectService(@Value("${app.dingconnect.base-url}") String baseUrl) {
+    public DingConnectService(
+            @Value("${app.dingconnect.base-url}") String baseUrl,
+            @Value("${app.dingconnect.proxy-url:}") String proxyUrl
+    ) {
+        HttpClient.Builder httpClientBuilder = HttpClient.newBuilder();
+
+        // A DingConnect exige que os pedidos de producao venham de um IP autorizado
+        // (whitelist obrigatoria, confirmado pelo suporte deles) -- o Render nao tem IP fixo,
+        // por isso as chamadas passam por um proxy dedicado (servidor com IP fixo) quando
+        // DINGCONNECT_PROXY_URL esta definido. Sem isso, liga-se diretamente (ex: dev local).
+        if (proxyUrl != null && !proxyUrl.isBlank()) {
+            // O JDK desativa por omissao a autenticacao Basic em tuneis HTTPS via proxy
+            // (CVE-2016-5597 hardening) -- sem isto, todos os pedidos falham com 407 mesmo
+            // com credenciais corretas.
+            System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
+
+            URI proxy = URI.create(proxyUrl);
+            String[] userInfo = proxy.getUserInfo() != null ? proxy.getUserInfo().split(":", 2) : null;
+            httpClientBuilder.proxy(ProxySelector.of(new InetSocketAddress(proxy.getHost(), proxy.getPort())));
+            if (userInfo != null && userInfo.length == 2) {
+                String proxyUser = URLDecoder.decode(userInfo[0], StandardCharsets.UTF_8);
+                String proxyPassword = URLDecoder.decode(userInfo[1], StandardCharsets.UTF_8);
+                httpClientBuilder.authenticator(new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        if (getRequestorType() == RequestorType.PROXY) {
+                            return new PasswordAuthentication(proxyUser, proxyPassword.toCharArray());
+                        }
+                        return null;
+                    }
+                });
+            }
+            log.info("DingConnectService: a encaminhar pedidos atraves do proxy {}:{}", proxy.getHost(), proxy.getPort());
+        }
+
         // O dominio da DingConnect esta atras da Cloudflare, que bloqueia com 403 pedidos sem
         // User-Agent de browser (o mesmo aconteceu ao buscar os logos das operadoras).
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
+                .requestFactory(new JdkClientHttpRequestFactory(httpClientBuilder.build()))
                 .defaultHeader("User-Agent", "Mozilla/5.0 (compatible; LusoTop/1.0)")
                 .build();
     }
