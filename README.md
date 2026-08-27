@@ -80,7 +80,7 @@ Sem estas variáveis a criação da sessão de checkout falha (`STRIPE_ERROR`) e
 falha (sem `DINGCONNECT_API_KEY`), mas o resto da aplicação continua a funcionar.
 
 A DingConnect exige que os pedidos em modo Live venham de um IP fixo autorizado por eles
-(confirmado pelo suporte deles por email — não aceitam autenticação só por API key). Se o
+(confirmado pelo suporte deles por email; não aceitam autenticação só por API key). Se o
 backend não tiver IP de saída fixo (ex: Render sem add-on de IP dedicado, que só está disponível
 em planos caros), define `DINGCONNECT_PROXY_URL=http://user:pass@host:porta` para encaminhar as
 chamadas através de um proxy HTTP num servidor com IP fixo, e autoriza esse IP na DingConnect.
@@ -118,7 +118,7 @@ Registo/login com passwords em hash BCrypt e JWT real (`POST /api/auth/register`
 `POST /api/auth/login`, `GET /api/auth/me`), sem depender de nenhum fornecedor externo. Defina
 `JWT_SECRET` em produção (o valor por omissão em `application.yml` serve apenas para
 desenvolvimento local). Não é obrigatório ter sessão iniciada para escolher país, operadora,
-número e valor, mas é obrigatório entrar ou criar conta antes de avançar para o pagamento — o
+número e valor, mas é obrigatório entrar ou criar conta antes de avançar para o pagamento: o
 backend recusa `POST /api/orders` sem utilizador autenticado.
 
 ## Documentação
