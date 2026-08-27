@@ -29,7 +29,12 @@ public class DingConnectService {
     private String apiKey;
 
     public DingConnectService(@Value("${app.dingconnect.base-url}") String baseUrl) {
-        this.restClient = RestClient.builder().baseUrl(baseUrl).build();
+        // O dominio da DingConnect esta atras da Cloudflare, que bloqueia com 403 pedidos sem
+        // User-Agent de browser (o mesmo aconteceu ao buscar os logos das operadoras).
+        this.restClient = RestClient.builder()
+                .baseUrl(baseUrl)
+                .defaultHeader("User-Agent", "Mozilla/5.0 (compatible; LusoTop/1.0)")
+                .build();
     }
 
     public DingConnectTransferResult sendTransfer(
@@ -76,11 +81,21 @@ public class DingConnectService {
                     ? "Estado: " + (response.transferRecord() != null ? response.transferRecord().processingState() : "desconhecido")
                     : response.errorCodes().stream().map(DingConnectError::code).reduce((a, b) -> a + ", " + b).orElse("erro desconhecido");
             log.error("DingConnect SendTransfer nao teve sucesso para sku={} distributorRef={}: {}", skuCode, distributorRef, errorSummary);
-            return DingConnectTransferResult.failure(errorSummary);
+            return DingConnectTransferResult.failure(truncate(errorSummary));
         } catch (Exception e) {
             log.error("Erro ao chamar DingConnect SendTransfer para sku={} distributorRef={}", skuCode, distributorRef, e);
-            return DingConnectTransferResult.failure("Erro de comunicacao com a DingConnect: " + e.getMessage());
+            return DingConnectTransferResult.failure(truncate("Erro de comunicacao com a DingConnect: " + e.getMessage()));
         }
+    }
+
+    // orders.delivery_error e VARCHAR(500) -- uma resposta inesperada (ex: pagina de bloqueio da
+    // Cloudflare em vez de JSON) pode ser muito maior do que isso e rebentar o proprio UPDATE,
+    // desfazendo toda a transacao (incluindo o reembolso automatico que devia acontecer a seguir).
+    private static final int MAX_ERROR_LENGTH = 450;
+
+    private String truncate(String message) {
+        if (message == null) return null;
+        return message.length() > MAX_ERROR_LENGTH ? message.substring(0, MAX_ERROR_LENGTH) + "…" : message;
     }
 
     private record SendTransferResponse(
