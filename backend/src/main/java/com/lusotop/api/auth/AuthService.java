@@ -8,6 +8,7 @@ import com.lusotop.api.auth.dto.AuthResponse;
 import com.lusotop.api.auth.dto.LoginRequest;
 import com.lusotop.api.auth.dto.RegisterRequest;
 import com.lusotop.api.auth.dto.UserResponse;
+import com.lusotop.api.common.BadRequestException;
 import com.lusotop.api.common.ConflictException;
 import com.lusotop.api.user.User;
 import com.lusotop.api.user.UserRepository;
@@ -74,17 +75,17 @@ public class AuthService {
 
     public AuthResponse loginWithGoogle(String idToken) {
         if (googleIdTokenVerifier == null) {
-            throw new BadCredentialsException("Login com Google não está configurado.");
+            throw new BadRequestException("GOOGLE_NOT_CONFIGURED", "Login com Google não está configurado.");
         }
 
         GoogleIdToken token;
         try {
             token = googleIdTokenVerifier.verify(idToken);
         } catch (GeneralSecurityException | IOException e) {
-            throw new BadCredentialsException("Não foi possível verificar o token do Google.");
+            throw new BadRequestException("GOOGLE_VERIFICATION_FAILED", "Não foi possível verificar o token do Google.");
         }
         if (token == null) {
-            throw new BadCredentialsException("Token do Google inválido ou expirado.");
+            throw new BadRequestException("GOOGLE_TOKEN_INVALID", "Token do Google inválido ou expirado.");
         }
 
         GoogleIdToken.Payload payload = token.getPayload();
