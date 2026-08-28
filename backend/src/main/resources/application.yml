@@ -27,7 +27,10 @@ app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   jwt:
-    secret: ${JWT_SECRET:lusotop-local-dev-secret-change-me-in-production-please-32chars-min}
+    # Sem valor por omissao de proposito: este repositorio e publico, por isso qualquer valor
+    # fixo aqui seria visivel a qualquer pessoa. Se JWT_SECRET nao estiver definido, a app falha
+    # ao arrancar em vez de assinar/aceitar tokens com uma chave conhecida publicamente.
+    secret: ${JWT_SECRET}
     expiration-days: ${JWT_EXPIRATION_DAYS:7}
   google:
     client-id: ${GOOGLE_CLIENT_ID:}

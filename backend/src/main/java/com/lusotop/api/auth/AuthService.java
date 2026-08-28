@@ -21,10 +21,19 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class AuthService {
+
+    // Hash bcrypt valido de uma password que ninguem tem -- usado para que login() gaste sempre o
+    // mesmo tempo a comparar a password, mesmo quando o email nao existe. Sem isto, um pedido a um
+    // email inexistente responde muito mais rapido (sem custo de bcrypt) do que um pedido a um
+    // email real com password errada, permitindo a um atacante descobrir que emails tem conta so
+    // por medir o tempo de resposta.
+    private static final String DUMMY_PASSWORD_HASH =
+            "$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5L2ex4M3lTQGb4tj7rTGP6Kd9jvfa";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -63,14 +72,18 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmailIgnoreCase(request.email())
-                .orElseThrow(() -> new BadCredentialsException("Email ou password incorretos."));
+        Optional<User> user = userRepository.findByEmailIgnoreCase(request.email());
 
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        // Compara sempre contra um hash (real ou dummy) antes de decidir, para que o tempo de
+        // resposta nao revele se o email existe.
+        String hashToCheck = user.map(User::getPasswordHash).orElse(DUMMY_PASSWORD_HASH);
+        boolean matches = passwordEncoder.matches(request.password(), hashToCheck);
+
+        if (user.isEmpty() || !matches) {
             throw new BadCredentialsException("Email ou password incorretos.");
         }
 
-        return buildAuthResponse(user);
+        return buildAuthResponse(user.get());
     }
 
     public AuthResponse loginWithGoogle(String idToken) {

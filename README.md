@@ -115,11 +115,13 @@ Se a entrega falhar, o pedido fica `FAILED` e o pagamento é reembolsado automat
 ## Autenticação
 
 Registo/login com passwords em hash BCrypt e JWT real (`POST /api/auth/register`,
-`POST /api/auth/login`, `GET /api/auth/me`), sem depender de nenhum fornecedor externo. Defina
-`JWT_SECRET` em produção (o valor por omissão em `application.yml` serve apenas para
-desenvolvimento local). Não é obrigatório ter sessão iniciada para escolher país, operadora,
-número e valor, mas é obrigatório entrar ou criar conta antes de avançar para o pagamento: o
-backend recusa `POST /api/orders` sem utilizador autenticado.
+`POST /api/auth/login`, `GET /api/auth/me`), sem depender de nenhum fornecedor externo. `JWT_SECRET`
+é obrigatório (sem valor por omissão, mesmo em local -- este repositório é público, por isso um
+valor fixo no `application.yml` seria visível a qualquer pessoa e permitiria forjar tokens válidos).
+Define uma string aleatória qualquer, ex: `export JWT_SECRET=$(openssl rand -base64 48)`. Não é
+obrigatório ter sessão iniciada para escolher país, operadora, número e valor, mas é obrigatório
+entrar ou criar conta antes de avançar para o pagamento: o backend recusa `POST /api/orders` sem
+utilizador autenticado.
 
 ## Documentação
 
