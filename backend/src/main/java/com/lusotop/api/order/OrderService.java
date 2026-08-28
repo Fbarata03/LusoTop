@@ -7,6 +7,7 @@ import com.lusotop.api.country.CountryRepository;
 import com.lusotop.api.currency.ExchangeRateService;
 import com.lusotop.api.delivery.DingConnectService;
 import com.lusotop.api.delivery.DingConnectTransferResult;
+import com.lusotop.api.email.EmailService;
 import com.lusotop.api.notification.NotificationService;
 import com.lusotop.api.operator.Operator;
 import com.lusotop.api.operator.OperatorRepository;
@@ -44,6 +45,7 @@ public class OrderService {
     private final DingConnectService dingConnectService;
     private final NotificationService notificationService;
     private final ReceiptService receiptService;
+    private final EmailService emailService;
 
     @Value("${app.stripe.success-url}")
     private String successUrl;
@@ -59,7 +61,8 @@ public class OrderService {
             ExchangeRateService exchangeRateService,
             DingConnectService dingConnectService,
             NotificationService notificationService,
-            ReceiptService receiptService
+            ReceiptService receiptService,
+            EmailService emailService
     ) {
         this.orderRepository = orderRepository;
         this.countryRepository = countryRepository;
@@ -69,6 +72,7 @@ public class OrderService {
         this.dingConnectService = dingConnectService;
         this.notificationService = notificationService;
         this.receiptService = receiptService;
+        this.emailService = emailService;
     }
 
     public CreateOrderResponse createOrder(CreateOrderRequest request, User user) {
@@ -213,12 +217,42 @@ public class OrderService {
             order.setDingconnectTransferRef(result.transferRef());
             order.setDeliveryError(null);
             notificationService.notifyRechargeDelivered(order);
+            sendReceiptEmail(order);
         } else {
             order.setDeliveryStatus(DeliveryStatus.FAILED);
             order.setDeliveryError(result.errorMessage());
             log.error("Paid order {} could not be delivered: {}", order.getId(), result.errorMessage());
             refundFailedDelivery(order);
             notificationService.notifyRechargeFailed(order);
+        }
+    }
+
+    private void sendReceiptEmail(Order order) {
+        try {
+            byte[] pdf = receiptService.generate(order);
+            String html = """
+                    <p>Olá %s,</p>
+                    <p>A tua recarga de %s %s para %s (%s) foi entregue com sucesso.</p>
+                    <p>Em anexo está o comprovativo em PDF.</p>
+                    """.formatted(
+                    order.getUser().getName(),
+                    order.getPayerAmount(),
+                    order.getPayerCurrency(),
+                    order.getOperator().getName(),
+                    order.getPhoneNumber()
+            );
+            emailService.send(
+                    order.getUser().getEmail(),
+                    "Comprovativo da tua recarga - LusoTop",
+                    html,
+                    "lusotop-comprovativo-" + order.getId() + ".pdf",
+                    pdf
+            );
+        } catch (Exception e) {
+            // Nunca deve impedir a entrega de ser marcada como concluida -- o comprovativo
+            // continua disponivel para download manual em "Minhas recargas" mesmo que o email
+            // falhe.
+            log.error("Falha ao enviar comprovativo por email para a order {}", order.getId(), e);
         }
     }
 
