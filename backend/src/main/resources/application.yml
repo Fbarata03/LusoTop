@@ -24,6 +24,8 @@ server:
 
 app:
   demo-mode: ${DEMO_MODE:true}
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   jwt:
@@ -43,3 +45,6 @@ app:
     api-key: ${DINGCONNECT_API_KEY:}
     base-url: ${DINGCONNECT_BASE_URL:https://api.dingconnect.com}
     proxy-url: ${DINGCONNECT_PROXY_URL:}
+  resend:
+    api-key: ${RESEND_API_KEY:}
+    from: ${RESEND_FROM:LusoTop <onboarding@resend.dev>}

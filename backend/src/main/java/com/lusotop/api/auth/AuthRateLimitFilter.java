@@ -38,7 +38,10 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         String path = request.getRequestURI();
-        boolean limited = "/api/auth/login".equals(path) || "/api/auth/register".equals(path);
+        boolean limited = "/api/auth/login".equals(path)
+                || "/api/auth/register".equals(path)
+                || "/api/auth/forgot-password".equals(path)
+                || "/api/auth/reset-password".equals(path);
 
         if (limited && "POST".equalsIgnoreCase(request.getMethod()) && isRateLimited(clientIp(request))) {
             response.setStatus(429);

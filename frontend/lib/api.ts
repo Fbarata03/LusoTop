@@ -164,6 +164,20 @@ export function loginWithGoogle(idToken: string): Promise<AuthResult> {
   });
 }
 
+export function forgotPassword(email: string): Promise<void> {
+  return request("/api/auth/forgot-password", z.unknown(), {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  }).then(() => undefined);
+}
+
+export function resetPassword(token: string, newPassword: string): Promise<void> {
+  return request("/api/auth/reset-password", z.unknown(), {
+    method: "POST",
+    body: JSON.stringify({ token, newPassword }),
+  }).then(() => undefined);
+}
+
 export function fetchMe(token: string): Promise<User> {
   return request("/api/auth/me", userSchema, {
     headers: { Authorization: `Bearer ${token}` },

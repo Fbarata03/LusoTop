@@ -72,9 +72,17 @@ export default function EntrarPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground" htmlFor="password">
-                Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-foreground" htmlFor="password">
+                  Password
+                </label>
+                <Link
+                  href="/esqueci-password"
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  Esqueci-me da password
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"

@@ -1,9 +1,11 @@
 package com.lusotop.api.auth;
 
 import com.lusotop.api.auth.dto.AuthResponse;
+import com.lusotop.api.auth.dto.ForgotPasswordRequest;
 import com.lusotop.api.auth.dto.GoogleLoginRequest;
 import com.lusotop.api.auth.dto.LoginRequest;
 import com.lusotop.api.auth.dto.RegisterRequest;
+import com.lusotop.api.auth.dto.ResetPasswordRequest;
 import com.lusotop.api.auth.dto.UserResponse;
 import com.lusotop.api.user.User;
 import jakarta.validation.Valid;
@@ -44,5 +46,17 @@ public class AuthController {
     @GetMapping("/me")
     public UserResponse me(@AuthenticationPrincipal User user) {
         return UserResponse.from(user);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.email());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.noContent().build();
     }
 }

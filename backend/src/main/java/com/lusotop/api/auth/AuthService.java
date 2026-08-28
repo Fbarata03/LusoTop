@@ -10,6 +10,7 @@ import com.lusotop.api.auth.dto.RegisterRequest;
 import com.lusotop.api.auth.dto.UserResponse;
 import com.lusotop.api.common.BadRequestException;
 import com.lusotop.api.common.ConflictException;
+import com.lusotop.api.email.EmailService;
 import com.lusotop.api.user.User;
 import com.lusotop.api.user.UserRepository;
 import com.lusotop.api.user.UserRole;
@@ -19,8 +20,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Collections;
+import java.util.HexFormat;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,20 +45,32 @@ public class AuthService {
     private static final String DUMMY_PASSWORD_HASH =
             "$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5L2ex4M3lTQGb4tj7rTGP6Kd9jvfa";
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final Duration RESET_TOKEN_TTL = Duration.ofHours(1);
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final GoogleIdTokenVerifier googleIdTokenVerifier;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
+    private final String frontendBaseUrl;
 
     public AuthService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            @Value("${app.google.client-id}") String googleClientId
+            PasswordResetTokenRepository passwordResetTokenRepository,
+            EmailService emailService,
+            @Value("${app.google.client-id}") String googleClientId,
+            @Value("${app.frontend.base-url}") String frontendBaseUrl
     ) throws GeneralSecurityException, IOException {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.emailService = emailService;
+        this.frontendBaseUrl = frontendBaseUrl;
         this.googleIdTokenVerifier = googleClientId == null || googleClientId.isBlank()
                 ? null
                 : new GoogleIdTokenVerifier.Builder(GoogleNetHttpTransport.newTrustedTransport(), GsonFactory.getDefaultInstance())
@@ -121,6 +143,58 @@ public class AuthService {
                 });
 
         return buildAuthResponse(user);
+    }
+
+    /** Sempre "sucesso" do ponto de vista do chamador, exista ou nao o email -- evita confirmar
+     * quais emails tem conta. */
+    public void forgotPassword(String email) {
+        userRepository.findByEmailIgnoreCase(email).ifPresent(user -> {
+            String rawToken = generateRawToken();
+
+            PasswordResetToken resetToken = new PasswordResetToken();
+            resetToken.setUser(user);
+            resetToken.setTokenHash(hashToken(rawToken));
+            resetToken.setExpiresAt(Instant.now().plus(RESET_TOKEN_TTL));
+            passwordResetTokenRepository.save(resetToken);
+
+            String link = frontendBaseUrl + "/redefinir-password?token=" + rawToken;
+            String html = """
+                    <p>Olá %s,</p>
+                    <p>Recebemos um pedido para redefinir a password da tua conta LusoTop.</p>
+                    <p><a href="%s">Clica aqui para escolher uma password nova</a></p>
+                    <p>Este link expira daqui a 1 hora. Se não pediste isto, ignora este email.</p>
+                    """.formatted(user.getName(), link);
+            emailService.send(user.getEmail(), "Redefinir a tua password - LusoTop", html);
+        });
+    }
+
+    public void resetPassword(String rawToken, String newPassword) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByTokenHash(hashToken(rawToken))
+                .filter(PasswordResetToken::isValid)
+                .orElseThrow(() -> new BadRequestException("INVALID_RESET_TOKEN", "Este link é inválido ou já expirou."));
+
+        User user = resetToken.getUser();
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        resetToken.setUsedAt(Instant.now());
+        passwordResetTokenRepository.save(resetToken);
+    }
+
+    private String generateRawToken() {
+        byte[] bytes = new byte[32];
+        SECURE_RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private String hashToken(String rawToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private AuthResponse buildAuthResponse(User user) {
