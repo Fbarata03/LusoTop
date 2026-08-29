@@ -11,6 +11,7 @@ public record AdminDashboardResponse(
         long paidOrders,
         long failedPayments,
         BigDecimal totalRevenueEur,
+        BigDecimal grossMarginEur,
         long ordersToday,
         long ordersThisMonth
 ) {

@@ -252,6 +252,7 @@ const adminDashboardSchema = z.object({
   paidOrders: z.number(),
   failedPayments: z.number(),
   totalRevenueEur: z.number(),
+  grossMarginEur: z.number(),
   ordersToday: z.number(),
   ordersThisMonth: z.number(),
 });

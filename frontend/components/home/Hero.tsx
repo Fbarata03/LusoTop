@@ -15,7 +15,7 @@ const TRUST_POINTS = [
   { icon: Lock, label: "Pagamento seguro via Stripe" },
 ];
 
-export function Hero() {
+export function Hero({ presetCountryIso }: { presetCountryIso?: string | null }) {
   return (
     <section
       className="relative overflow-hidden bg-lusotop-cream dark:bg-lusotop-navy"
@@ -58,7 +58,7 @@ export function Hero() {
             >
               <Globe3D />
             </div>
-            <RechargeWizard />
+            <RechargeWizard presetCountryIso={presetCountryIso} />
           </div>
         </div>
       </div>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { fetchCountries } from "@/lib/api";
 import { StepIndicator } from "./StepIndicator";
 import { DestinoStep } from "./steps/DestinoStep";
 import { OperadoraStep } from "./steps/OperadoraStep";
@@ -27,13 +28,33 @@ const INITIAL_STATE: WizardState = {
   product: null,
 };
 
-export function RechargeWizard() {
+export function RechargeWizard({ presetCountryIso }: { presetCountryIso?: string | null }) {
   const [state, setState] = useState<WizardState>(INITIAL_STATE);
+
+  // Quando o utilizador clica num país fora do wizard (ex: na grelha de países), pré-seleciona
+  // esse país e avança direto para o passo da operadora.
+  useEffect(() => {
+    if (!presetCountryIso) return;
+    let cancelled = false;
+    fetchCountries()
+      .then((countries) => {
+        if (cancelled) return;
+        const match = countries.find((c) => c.isoCode === presetCountryIso && c.status === "ACTIVE");
+        if (match) setState((s) => ({ ...s, step: 2, country: match }));
+      })
+      .catch(() => {
+        // Se falhar, o utilizador fica no passo 1 e escolhe manualmente -- nao e critico.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [presetCountryIso]);
 
   return (
     <Card
+      id="recarga"
       className={cn(
-        "wizard-dark w-full max-w-md overflow-hidden gap-0 rounded-[28px] border-0 bg-background/90 py-0",
+        "wizard-dark w-full max-w-md overflow-hidden gap-0 rounded-[28px] border-0 bg-background/90 py-0 scroll-mt-24",
         "shadow-[0_30px_80px_-20px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.08),0_20px_70px_-15px_rgba(52,211,153,0.3)]",
         "ring-1 ring-white/10 backdrop-blur-xl",
         "before:pointer-events-none before:absolute before:inset-0 before:rounded-[28px]",

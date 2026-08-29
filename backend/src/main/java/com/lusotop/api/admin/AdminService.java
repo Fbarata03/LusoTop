@@ -39,6 +39,7 @@ public class AdminService {
                 orderRepository.countByStatus(OrderStatus.PAID),
                 orderRepository.countByStatus(OrderStatus.FAILED),
                 orderRepository.sumPayerAmountForPaidOrders(),
+                orderRepository.sumGrossMarginForDeliveredOrders(),
                 orderRepository.countByCreatedAtAfter(startOfToday),
                 orderRepository.countByCreatedAtAfter(startOfMonth)
         );

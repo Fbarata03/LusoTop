@@ -38,6 +38,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("select coalesce(sum(o.payerAmount), 0) from Order o where o.status = 'PAID'")
     BigDecimal sumPayerAmountForPaidOrders();
 
+    // Margem bruta = valor pago menos o custo real da DingConnect, so para pedidos efetivamente
+    // entregues (falhados foram reembolsados, nao ha receita nem custo real nesses). Nao desconta
+    // a taxa da Stripe (que varia por transacao) -- e uma margem bruta, nao lucro liquido exato.
+    @Query("""
+            select coalesce(sum(o.payerAmount - case when p.dingconnectSendValueRange = true then p.amount else p.dingconnectSendValue end), 0)
+            from Order o join o.product p
+            where o.status = 'PAID' and o.deliveryStatus = 'DELIVERED'
+            """)
+    BigDecimal sumGrossMarginForDeliveredOrders();
+
     long countByUserId(Long userId);
 
     @Query("select coalesce(sum(o.payerAmount), 0) from Order o where o.status = 'PAID' and o.user.id = :userId")
