@@ -202,8 +202,20 @@ public class OrderService {
         }
 
         boolean rangeProduct = product.isDingconnectSendValueRange();
-        BigDecimal sendValue = rangeProduct ? order.getPayerAmount() : order.getProductAmount();
-        String sendCurrency = rangeProduct ? order.getPayerCurrency() : order.getProductCurrency();
+        if (!rangeProduct && (product.getDingconnectSendValue() == null || product.getDingconnectSendCurrency() == null)) {
+            // Produtos de valor fixo tem de usar o SendValue/SendCurrencyIso exato que a DingConnect
+            // define para o SKU (ver GetProducts) -- nao o montante em moeda local. Sem isso
+            // configurado, a DingConnect rejeita sempre com ParameterCombinationInvalid.
+            order.setDeliveryStatus(DeliveryStatus.FAILED);
+            order.setDeliveryError("Produto sem SendValue/SendCurrency da DingConnect configurado.");
+            log.error("Paid order {} has product {} without DingConnect send value configured", order.getId(), product.getId());
+            refundFailedDelivery(order);
+            notificationService.notifyRechargeFailed(order);
+            return;
+        }
+
+        BigDecimal sendValue = rangeProduct ? order.getPayerAmount() : product.getDingconnectSendValue();
+        String sendCurrency = rangeProduct ? order.getPayerCurrency() : product.getDingconnectSendCurrency();
         DingConnectTransferResult result = dingConnectService.sendTransfer(
                 product.getDingconnectSkuCode(),
                 sendValue,

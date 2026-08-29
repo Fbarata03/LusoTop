@@ -1,0 +1,132 @@
+-- Bug real descoberto em 2026-08-29: SendTransfer para produtos de valor fixo (nao-range)
+-- estava a enviar o montante em moeda local (ex: 5000 AOA) como SendValue/SendCurrencyIso, mas a
+-- DingConnect exige o valor exato em EUR que ela propria define para o SKU (ex: 7.05 EUR),
+-- confirmado via GetProducts (Minimum.SendValue == Maximum.SendValue para produtos fixos). Ate
+-- agora nenhum pedido real tinha chegado tao longe no pipeline para isto ser detectado.
+
+ALTER TABLE airtime_products ADD COLUMN dingconnect_send_value NUMERIC(12,4);
+ALTER TABLE airtime_products ADD COLUMN dingconnect_send_currency VARCHAR(3);
+
+-- Preenche o valor/moeda exato exigido pela DingConnect (Minimum.SendValue/SendCurrencyIso do GetProducts)
+-- para os 118 produtos de valor fixo. Descoberto em 2026-08-29: o codigo anterior enviava o
+-- montante em moeda local (ex: 5000 AOA) como SendValue, mas a DingConnect exige o valor em EUR
+-- que ela propria define para cada SKU fixo (ex: 7.05 EUR), nao o equivalente calculado por nos.
+
+UPDATE airtime_products SET dingconnect_send_value = 3.08, dingconnect_send_currency = 'EUR' WHERE id = 397;
+UPDATE airtime_products SET dingconnect_send_value = 7.7, dingconnect_send_currency = 'EUR' WHERE id = 398;
+UPDATE airtime_products SET dingconnect_send_value = 0.77, dingconnect_send_currency = 'EUR' WHERE id = 399;
+UPDATE airtime_products SET dingconnect_send_value = 0.16, dingconnect_send_currency = 'EUR' WHERE id = 400;
+UPDATE airtime_products SET dingconnect_send_value = 4.62, dingconnect_send_currency = 'EUR' WHERE id = 401;
+UPDATE airtime_products SET dingconnect_send_value = 1.54, dingconnect_send_currency = 'EUR' WHERE id = 402;
+UPDATE airtime_products SET dingconnect_send_value = 0.84, dingconnect_send_currency = 'EUR' WHERE id = 403;
+UPDATE airtime_products SET dingconnect_send_value = 3.3, dingconnect_send_currency = 'EUR' WHERE id = 404;
+UPDATE airtime_products SET dingconnect_send_value = 0.59, dingconnect_send_currency = 'EUR' WHERE id = 405;
+UPDATE airtime_products SET dingconnect_send_value = 1.65, dingconnect_send_currency = 'EUR' WHERE id = 406;
+UPDATE airtime_products SET dingconnect_send_value = 4.94, dingconnect_send_currency = 'EUR' WHERE id = 407;
+UPDATE airtime_products SET dingconnect_send_value = 8.22, dingconnect_send_currency = 'EUR' WHERE id = 408;
+UPDATE airtime_products SET dingconnect_send_value = 4.23, dingconnect_send_currency = 'EUR' WHERE id = 409;
+UPDATE airtime_products SET dingconnect_send_value = 0.15, dingconnect_send_currency = 'EUR' WHERE id = 410;
+UPDATE airtime_products SET dingconnect_send_value = 0.71, dingconnect_send_currency = 'EUR' WHERE id = 411;
+UPDATE airtime_products SET dingconnect_send_value = 1.42, dingconnect_send_currency = 'EUR' WHERE id = 412;
+UPDATE airtime_products SET dingconnect_send_value = 2.83, dingconnect_send_currency = 'EUR' WHERE id = 413;
+UPDATE airtime_products SET dingconnect_send_value = 7.05, dingconnect_send_currency = 'EUR' WHERE id = 414;
+UPDATE airtime_products SET dingconnect_send_value = 6.85, dingconnect_send_currency = 'EUR' WHERE id = 415;
+UPDATE airtime_products SET dingconnect_send_value = 3.43, dingconnect_send_currency = 'EUR' WHERE id = 416;
+UPDATE airtime_products SET dingconnect_send_value = 11.41, dingconnect_send_currency = 'EUR' WHERE id = 417;
+UPDATE airtime_products SET dingconnect_send_value = 22.81, dingconnect_send_currency = 'EUR' WHERE id = 418;
+UPDATE airtime_products SET dingconnect_send_value = 5.71, dingconnect_send_currency = 'EUR' WHERE id = 419;
+UPDATE airtime_products SET dingconnect_send_value = 5.71, dingconnect_send_currency = 'EUR' WHERE id = 420;
+UPDATE airtime_products SET dingconnect_send_value = 22.81, dingconnect_send_currency = 'EUR' WHERE id = 421;
+UPDATE airtime_products SET dingconnect_send_value = 6.85, dingconnect_send_currency = 'EUR' WHERE id = 422;
+UPDATE airtime_products SET dingconnect_send_value = 11.41, dingconnect_send_currency = 'EUR' WHERE id = 423;
+UPDATE airtime_products SET dingconnect_send_value = 9.13, dingconnect_send_currency = 'EUR' WHERE id = 424;
+UPDATE airtime_products SET dingconnect_send_value = 4.57, dingconnect_send_currency = 'EUR' WHERE id = 425;
+UPDATE airtime_products SET dingconnect_send_value = 7.99, dingconnect_send_currency = 'EUR' WHERE id = 426;
+UPDATE airtime_products SET dingconnect_send_value = 20.53, dingconnect_send_currency = 'EUR' WHERE id = 427;
+UPDATE airtime_products SET dingconnect_send_value = 13.69, dingconnect_send_currency = 'EUR' WHERE id = 428;
+UPDATE airtime_products SET dingconnect_send_value = 6.87, dingconnect_send_currency = 'EUR' WHERE id = 429;
+UPDATE airtime_products SET dingconnect_send_value = 41.05, dingconnect_send_currency = 'EUR' WHERE id = 430;
+UPDATE airtime_products SET dingconnect_send_value = 9.17, dingconnect_send_currency = 'EUR' WHERE id = 431;
+UPDATE airtime_products SET dingconnect_send_value = 4.59, dingconnect_send_currency = 'EUR' WHERE id = 432;
+UPDATE airtime_products SET dingconnect_send_value = 6.85, dingconnect_send_currency = 'EUR' WHERE id = 433;
+UPDATE airtime_products SET dingconnect_send_value = 4.57, dingconnect_send_currency = 'EUR' WHERE id = 434;
+UPDATE airtime_products SET dingconnect_send_value = 11.46, dingconnect_send_currency = 'EUR' WHERE id = 435;
+UPDATE airtime_products SET dingconnect_send_value = 9.13, dingconnect_send_currency = 'EUR' WHERE id = 436;
+UPDATE airtime_products SET dingconnect_send_value = 22.93, dingconnect_send_currency = 'EUR' WHERE id = 437;
+UPDATE airtime_products SET dingconnect_send_value = 5.71, dingconnect_send_currency = 'EUR' WHERE id = 438;
+UPDATE airtime_products SET dingconnect_send_value = 22.81, dingconnect_send_currency = 'EUR' WHERE id = 439;
+UPDATE airtime_products SET dingconnect_send_value = 3.9, dingconnect_send_currency = 'EUR' WHERE id = 440;
+UPDATE airtime_products SET dingconnect_send_value = 13.69, dingconnect_send_currency = 'EUR' WHERE id = 441;
+UPDATE airtime_products SET dingconnect_send_value = 4.59, dingconnect_send_currency = 'EUR' WHERE id = 442;
+UPDATE airtime_products SET dingconnect_send_value = 11.4, dingconnect_send_currency = 'EUR' WHERE id = 443;
+UPDATE airtime_products SET dingconnect_send_value = 3.44, dingconnect_send_currency = 'EUR' WHERE id = 444;
+UPDATE airtime_products SET dingconnect_send_value = 6.88, dingconnect_send_currency = 'EUR' WHERE id = 445;
+UPDATE airtime_products SET dingconnect_send_value = 22.91, dingconnect_send_currency = 'EUR' WHERE id = 446;
+UPDATE airtime_products SET dingconnect_send_value = 8.02, dingconnect_send_currency = 'EUR' WHERE id = 447;
+UPDATE airtime_products SET dingconnect_send_value = 5.73, dingconnect_send_currency = 'EUR' WHERE id = 448;
+UPDATE airtime_products SET dingconnect_send_value = 11.46, dingconnect_send_currency = 'EUR' WHERE id = 449;
+UPDATE airtime_products SET dingconnect_send_value = 9.17, dingconnect_send_currency = 'EUR' WHERE id = 450;
+UPDATE airtime_products SET dingconnect_send_value = 4, dingconnect_send_currency = 'EUR' WHERE id = 451;
+UPDATE airtime_products SET dingconnect_send_value = 5.24, dingconnect_send_currency = 'EUR' WHERE id = 452;
+UPDATE airtime_products SET dingconnect_send_value = 6.55, dingconnect_send_currency = 'EUR' WHERE id = 453;
+UPDATE airtime_products SET dingconnect_send_value = 9.83, dingconnect_send_currency = 'EUR' WHERE id = 454;
+UPDATE airtime_products SET dingconnect_send_value = 39.3, dingconnect_send_currency = 'EUR' WHERE id = 455;
+UPDATE airtime_products SET dingconnect_send_value = 11.79, dingconnect_send_currency = 'EUR' WHERE id = 456;
+UPDATE airtime_products SET dingconnect_send_value = 19.65, dingconnect_send_currency = 'EUR' WHERE id = 457;
+UPDATE airtime_products SET dingconnect_send_value = 26.2, dingconnect_send_currency = 'EUR' WHERE id = 458;
+UPDATE airtime_products SET dingconnect_send_value = 24.89, dingconnect_send_currency = 'EUR' WHERE id = 459;
+UPDATE airtime_products SET dingconnect_send_value = 13.1, dingconnect_send_currency = 'EUR' WHERE id = 460;
+UPDATE airtime_products SET dingconnect_send_value = 4.06, dingconnect_send_currency = 'EUR' WHERE id = 461;
+UPDATE airtime_products SET dingconnect_send_value = 0.81, dingconnect_send_currency = 'EUR' WHERE id = 462;
+UPDATE airtime_products SET dingconnect_send_value = 3.25, dingconnect_send_currency = 'EUR' WHERE id = 463;
+UPDATE airtime_products SET dingconnect_send_value = 0.16, dingconnect_send_currency = 'EUR' WHERE id = 464;
+UPDATE airtime_products SET dingconnect_send_value = 2.44, dingconnect_send_currency = 'EUR' WHERE id = 465;
+UPDATE airtime_products SET dingconnect_send_value = 1.63, dingconnect_send_currency = 'EUR' WHERE id = 466;
+UPDATE airtime_products SET dingconnect_send_value = 6.49, dingconnect_send_currency = 'EUR' WHERE id = 467;
+UPDATE airtime_products SET dingconnect_send_value = 9.74, dingconnect_send_currency = 'EUR' WHERE id = 468;
+UPDATE airtime_products SET dingconnect_send_value = 7.31, dingconnect_send_currency = 'EUR' WHERE id = 469;
+UPDATE airtime_products SET dingconnect_send_value = 8.11, dingconnect_send_currency = 'EUR' WHERE id = 470;
+UPDATE airtime_products SET dingconnect_send_value = 5.68, dingconnect_send_currency = 'EUR' WHERE id = 471;
+UPDATE airtime_products SET dingconnect_send_value = 4.88, dingconnect_send_currency = 'EUR' WHERE id = 472;
+UPDATE airtime_products SET dingconnect_send_value = 17.85, dingconnect_send_currency = 'EUR' WHERE id = 473;
+UPDATE airtime_products SET dingconnect_send_value = 12.99, dingconnect_send_currency = 'EUR' WHERE id = 474;
+UPDATE airtime_products SET dingconnect_send_value = 14.61, dingconnect_send_currency = 'EUR' WHERE id = 475;
+UPDATE airtime_products SET dingconnect_send_value = 16.23, dingconnect_send_currency = 'EUR' WHERE id = 476;
+UPDATE airtime_products SET dingconnect_send_value = 19.47, dingconnect_send_currency = 'EUR' WHERE id = 477;
+UPDATE airtime_products SET dingconnect_send_value = 11.36, dingconnect_send_currency = 'EUR' WHERE id = 478;
+UPDATE airtime_products SET dingconnect_send_value = 24.34, dingconnect_send_currency = 'EUR' WHERE id = 479;
+UPDATE airtime_products SET dingconnect_send_value = 21.09, dingconnect_send_currency = 'EUR' WHERE id = 480;
+UPDATE airtime_products SET dingconnect_send_value = 25.97, dingconnect_send_currency = 'EUR' WHERE id = 481;
+UPDATE airtime_products SET dingconnect_send_value = 29.2, dingconnect_send_currency = 'EUR' WHERE id = 482;
+UPDATE airtime_products SET dingconnect_send_value = 27.59, dingconnect_send_currency = 'EUR' WHERE id = 483;
+UPDATE airtime_products SET dingconnect_send_value = 22.72, dingconnect_send_currency = 'EUR' WHERE id = 484;
+UPDATE airtime_products SET dingconnect_send_value = 0.81, dingconnect_send_currency = 'EUR' WHERE id = 485;
+UPDATE airtime_products SET dingconnect_send_value = 1.63, dingconnect_send_currency = 'EUR' WHERE id = 486;
+UPDATE airtime_products SET dingconnect_send_value = 30.83, dingconnect_send_currency = 'EUR' WHERE id = 487;
+UPDATE airtime_products SET dingconnect_send_value = 3.25, dingconnect_send_currency = 'EUR' WHERE id = 488;
+UPDATE airtime_products SET dingconnect_send_value = 32.45, dingconnect_send_currency = 'EUR' WHERE id = 489;
+UPDATE airtime_products SET dingconnect_send_value = 2.44, dingconnect_send_currency = 'EUR' WHERE id = 490;
+UPDATE airtime_products SET dingconnect_send_value = 4.06, dingconnect_send_currency = 'EUR' WHERE id = 491;
+UPDATE airtime_products SET dingconnect_send_value = 8.11, dingconnect_send_currency = 'EUR' WHERE id = 492;
+UPDATE airtime_products SET dingconnect_send_value = 7.31, dingconnect_send_currency = 'EUR' WHERE id = 493;
+UPDATE airtime_products SET dingconnect_send_value = 4.88, dingconnect_send_currency = 'EUR' WHERE id = 494;
+UPDATE airtime_products SET dingconnect_send_value = 5.68, dingconnect_send_currency = 'EUR' WHERE id = 495;
+UPDATE airtime_products SET dingconnect_send_value = 6.49, dingconnect_send_currency = 'EUR' WHERE id = 496;
+UPDATE airtime_products SET dingconnect_send_value = 11.36, dingconnect_send_currency = 'EUR' WHERE id = 497;
+UPDATE airtime_products SET dingconnect_send_value = 12.99, dingconnect_send_currency = 'EUR' WHERE id = 498;
+UPDATE airtime_products SET dingconnect_send_value = 14.61, dingconnect_send_currency = 'EUR' WHERE id = 499;
+UPDATE airtime_products SET dingconnect_send_value = 16.23, dingconnect_send_currency = 'EUR' WHERE id = 500;
+UPDATE airtime_products SET dingconnect_send_value = 9.74, dingconnect_send_currency = 'EUR' WHERE id = 501;
+UPDATE airtime_products SET dingconnect_send_value = 19.47, dingconnect_send_currency = 'EUR' WHERE id = 502;
+UPDATE airtime_products SET dingconnect_send_value = 29.2, dingconnect_send_currency = 'EUR' WHERE id = 503;
+UPDATE airtime_products SET dingconnect_send_value = 13.74, dingconnect_send_currency = 'EUR' WHERE id = 504;
+UPDATE airtime_products SET dingconnect_send_value = 27.59, dingconnect_send_currency = 'EUR' WHERE id = 505;
+UPDATE airtime_products SET dingconnect_send_value = 24.34, dingconnect_send_currency = 'EUR' WHERE id = 506;
+UPDATE airtime_products SET dingconnect_send_value = 6.87, dingconnect_send_currency = 'EUR' WHERE id = 507;
+UPDATE airtime_products SET dingconnect_send_value = 32.45, dingconnect_send_currency = 'EUR' WHERE id = 508;
+UPDATE airtime_products SET dingconnect_send_value = 10.04, dingconnect_send_currency = 'EUR' WHERE id = 509;
+UPDATE airtime_products SET dingconnect_send_value = 20.08, dingconnect_send_currency = 'EUR' WHERE id = 510;
+UPDATE airtime_products SET dingconnect_send_value = 13.39, dingconnect_send_currency = 'EUR' WHERE id = 511;
+UPDATE airtime_products SET dingconnect_send_value = 27.47, dingconnect_send_currency = 'EUR' WHERE id = 512;
+UPDATE airtime_products SET dingconnect_send_value = 20.6, dingconnect_send_currency = 'EUR' WHERE id = 513;
+UPDATE airtime_products SET dingconnect_send_value = 26.77, dingconnect_send_currency = 'EUR' WHERE id = 514;

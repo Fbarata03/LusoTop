@@ -58,6 +58,18 @@ public class AirtimeProduct {
     @Column(name = "dingconnect_send_value_range", nullable = false)
     private boolean dingconnectSendValueRange;
 
+    /**
+     * Para produtos de valor fixo (dingconnectSendValueRange = false): o SendValue/SendCurrencyIso
+     * exato que a DingConnect exige para este SKU (Minimum.SendValue do GetProducts -- para um SKU
+     * fixo, Minimum == Maximum). NAO e o mesmo que o montante em moeda local (amount/currency) --
+     * a DingConnect so aceita o valor dela propria aqui, normalmente em EUR.
+     */
+    @Column(name = "dingconnect_send_value", precision = 12, scale = 4)
+    private java.math.BigDecimal dingconnectSendValue;
+
+    @Column(name = "dingconnect_send_currency", length = 3)
+    private String dingconnectSendCurrency;
+
     @Column(nullable = false)
     private boolean active;
 
