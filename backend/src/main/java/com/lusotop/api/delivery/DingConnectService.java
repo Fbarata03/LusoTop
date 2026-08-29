@@ -1,6 +1,7 @@
 package com.lusotop.api.delivery;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,16 @@ public class DingConnectService {
 
     private static final Logger log = LoggerFactory.getLogger(DingConnectService.class);
     private static final Set<String> SUCCESS_STATES = Set.of("Complete", "Approved");
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    // DisableFeature(FAIL_ON_UNKNOWN_PROPERTIES) -- bug real detetado em producao (order #40): um
+    // pedido SendTransfer verdadeiro (nao ValidateOnly) devolveu um campo extra ("SkuCode" dentro
+    // de TransferRecord) que o nosso DTO nao tinha. Por omissao o Jackson falha em campos
+    // desconhecidos, o que rebentou o parsing de uma resposta que era na verdade um SUCESSO --
+    // a DingConnect entregou o saldo a serio e cobrou a conta, mas o nosso codigo interpretou como
+    // falha, reembolsou o cliente pela Stripe e marcou o pedido como falhado. Nunca deve voltar a
+    // acontecer: ignorar campos desconhecidos e o comportamento correto para uma API externa que
+    // pode adicionar campos sem aviso.
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private static final Duration CURL_TIMEOUT = Duration.ofSeconds(30);
 
     private final String baseUrl;
