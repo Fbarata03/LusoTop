@@ -66,7 +66,7 @@ public class ReceiptService {
                 }
                 writeLine(cs, bold, 20, titleX, headerTop - logoSize / 2f + 7, "LusoTop");
 
-                PDImageXObject operatorLogo = loadRemoteImage(document, order.getOperator().getLogoUrl());
+                PDImageXObject operatorLogo = loadOperatorLogo(document, order.getOperator());
                 if (operatorLogo != null) {
                     float maxW = 90, maxH = 32;
                     float scale = Math.min(1f, Math.min(maxW / operatorLogo.getWidth(), maxH / operatorLogo.getHeight()));
@@ -99,10 +99,6 @@ public class ReceiptService {
                     y = writeLine(cs, regular, 10, margin + 170, y + lineHeight, row[1]);
                     y -= lineHeight;
                 }
-
-                y -= lineHeight;
-                y = writeLine(cs, regular, 9, margin,
-                        y, "Comprovativo informativo. Não é uma fatura fiscal.");
             }
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -111,6 +107,20 @@ public class ReceiptService {
         } catch (IOException e) {
             throw new UncheckedIOException("Falha ao gerar comprovativo PDF para o pedido " + order.getId(), e);
         }
+    }
+
+    /**
+     * Logo da operadora para o comprovativo. Tenta primeiro o ficheiro empacotado em
+     * {@code /branding/operators/{CODE}.png} (sempre disponivel, mesmo sem rede) e so
+     * depois recorre ao CDN da DingConnect.
+     */
+    private PDImageXObject loadOperatorLogo(PDDocument document, com.lusotop.api.operator.Operator operator) {
+        if (operator == null) return null;
+        if (operator.getCode() != null && !operator.getCode().isBlank()) {
+            PDImageXObject bundled = loadClasspathImage(document, "/branding/operators/" + operator.getCode() + ".png");
+            if (bundled != null) return bundled;
+        }
+        return loadRemoteImage(document, operator.getLogoUrl());
     }
 
     private PDImageXObject loadClasspathImage(PDDocument document, String resourcePath) {
