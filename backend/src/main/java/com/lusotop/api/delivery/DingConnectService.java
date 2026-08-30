@@ -11,15 +11,20 @@ import org.springframework.stereotype.Service;
 
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Envio real de recarga via DingConnect (SendTransfer). A API espera/devolve campos em
@@ -65,6 +70,19 @@ public class DingConnectService {
     private static final int SEND_ATTEMPTS = 5;
     private static final int VALIDATE_ATTEMPTS = 3;
     private static final long RETRY_BASE_DELAY_MS = 2000;
+
+    // O proxy (Squid na Hetzner) chega a ligar-se a DingConnect por IPv6. A seguranca de
+    // transacoes da DingConnect nao consegue atribuir o pais a esse IPv6 (ve um pseudo-IP da
+    // Cloudflare em 240.0.0.0/4 -> "pais desconhecido") e rejeita o SendTransfer com
+    // AuthenticationFailed, enquanto os endpoints de leitura (sem filtro de pais) passam. Para
+    // forcar o caminho todo por IPv4 resolvemos o host para um A record (Cloudflare) e passamos
+    // "curl --connect-to host:443:<ipv4>:443": o CONNECT do proxy passa a ser para um IPv4
+    // literal, o SNI/Host continuam a ser api.dingconnect.com. IP resolvido em cache curta.
+    private static final long DNS_CACHE_TTL_MS = 10 * 60 * 1000;
+    private final AtomicReference<CachedIp> cachedIpv4 = new AtomicReference<>();
+
+    private record CachedIp(String ip, long resolvedAt) {
+    }
 
     private final String baseUrl;
     private final String proxyUrl;
@@ -276,6 +294,37 @@ public class DingConnectService {
         }
     }
 
+    private String hostOf(String url) {
+        try {
+            return URI.create(url).getHost();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** IPv4 (A record) do host da DingConnect, com cache curta. null se nao houver forma de resolver. */
+    private String resolveIpv4(String host) {
+        if (host == null) return null;
+        CachedIp cached = cachedIpv4.get();
+        long now = System.currentTimeMillis();
+        if (cached != null && cached.ip() != null && now - cached.resolvedAt() < DNS_CACHE_TTL_MS) {
+            return cached.ip();
+        }
+        try {
+            String ip = Arrays.stream(InetAddress.getAllByName(host))
+                    .filter(a -> a instanceof Inet4Address)
+                    .map(a -> a.getHostAddress())
+                    .findFirst()
+                    .orElse(null);
+            cachedIpv4.set(new CachedIp(ip, now));
+            return ip;
+        } catch (Exception e) {
+            log.warn("Não foi possível resolver IPv4 de {} para forçar o caminho IPv4 da DingConnect", host, e);
+            cachedIpv4.set(new CachedIp(cached != null ? cached.ip() : null, now));
+            return cached != null ? cached.ip() : null;
+        }
+    }
+
     private CurlResult executeCurl(String path, String jsonBody) throws Exception {
         List<String> command = new ArrayList<>();
         command.add("curl");
@@ -289,6 +338,14 @@ public class DingConnectService {
         command.add("-X");
         command.add("POST");
         command.add(baseUrl + path);
+        // Forca o pedido (incluindo o salto proxy -> DingConnect) a sair por IPv4 -- ver nota em
+        // cachedIpv4. Se a resolucao falhar, segue sem --connect-to (melhor tentar do que abortar).
+        String host = hostOf(baseUrl);
+        String ipv4 = resolveIpv4(host);
+        if (ipv4 != null) {
+            command.add("--connect-to");
+            command.add(host + ":443:" + ipv4 + ":443");
+        }
         command.add("-H");
         command.add("User-Agent: Mozilla/5.0 (compatible; LusoTop/1.0)");
         command.add("-H");
