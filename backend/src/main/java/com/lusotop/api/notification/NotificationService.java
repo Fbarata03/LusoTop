@@ -23,11 +23,15 @@ public class NotificationService {
     }
 
     public void notifyRechargeFailed(Order order) {
-        String suffix = order.isRefunded()
+        String refundNote = order.isRefunded()
                 ? " O valor pago foi reembolsado automaticamente."
                 : " A nossa equipa foi notificada.";
+        String error = order.getDeliveryError() == null ? "" : order.getDeliveryError().toLowerCase();
+        String reason = error.contains("account")
+                ? " O número indicado não foi aceite pela operadora — confirma que está correto e com o indicativo do país."
+                : "";
         create(order, NotificationType.RECHARGE_FAILED, "Problema na recarga",
-                "Não foi possível concluir a recarga de " + order.getPhoneNumber() + "." + suffix);
+                "Não foi possível concluir a recarga de " + order.getPhoneNumber() + "." + reason + refundNote);
     }
 
     private void create(Order order, NotificationType type, String title, String message) {

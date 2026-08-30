@@ -3,6 +3,7 @@ package com.lusotop.api.delivery;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lusotop.api.delivery.DingConnectTransferResult.ErrorKind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +16,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +34,13 @@ import java.util.concurrent.TimeUnit;
  * reconhecivel como nao-browser pelo Bot Management da Cloudflare, independente do IP estar na
  * whitelist. O curl, com a mesma configuracao de proxy e headers, nunca falhou uma unica vez em
  * dezenas de testes diretos ao mesmo endpoint -- por isso usa-se aqui tambem.
+ *
+ * O endpoint SendTransfer, ao contrario dos de leitura (GetBalance/GetProviders), rejeita a
+ * autenticacao de forma INTERMITENTE ({"ResultCode":4,"ErrorCodes":[{"Code":"AuthenticationFailed"}]}
+ * com HTTP 401) -- ora falha varias vezes seguidas, ora passa dezenas de vezes seguidas, sem
+ * qualquer mudanca do nosso lado. Como esse 401 acontece ANTES de a transferencia ser criada
+ * (nenhum saldo e movido, nenhum registo fica na conta), e seguro repetir o pedido. Por isso
+ * {@link #sendTransfer} tenta varias vezes com backoff antes de desistir.
  */
 @Service
 public class DingConnectService {
@@ -50,6 +59,13 @@ public class DingConnectService {
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private static final Duration CURL_TIMEOUT = Duration.ofSeconds(30);
 
+    // Retentativas para o 401 intermitente do SendTransfer. Backoff linear a partir de RETRY_BASE.
+    // O envio real (dinheiro em jogo) insiste mais; a validacao pre-checkout insiste menos para
+    // nao deixar o utilizador a espera.
+    private static final int SEND_ATTEMPTS = 5;
+    private static final int VALIDATE_ATTEMPTS = 3;
+    private static final long RETRY_BASE_DELAY_MS = 2000;
+
     private final String baseUrl;
     private final String proxyUrl;
 
@@ -67,12 +83,67 @@ public class DingConnectService {
         }
     }
 
+    /**
+     * Corre a mesma validacao que o envio real (numero valido para a operadora, SKU/SendValue
+     * aceites, saldo suficiente) SEM mover dinheiro. Usado antes do checkout Stripe para nunca
+     * cobrar um cliente por uma recarga que a DingConnect nao vai aceitar.
+     */
+    public DingConnectTransferResult validateTransfer(
+            String skuCode,
+            BigDecimal sendValue,
+            String sendCurrencyIso,
+            String accountNumber,
+            String distributorRef
+    ) {
+        return attemptWithRetry(skuCode, sendValue, sendCurrencyIso, accountNumber, distributorRef, true, VALIDATE_ATTEMPTS);
+    }
+
     public DingConnectTransferResult sendTransfer(
             String skuCode,
             BigDecimal sendValue,
             String sendCurrencyIso,
             String accountNumber,
             String distributorRef
+    ) {
+        return attemptWithRetry(skuCode, sendValue, sendCurrencyIso, accountNumber, distributorRef, false, SEND_ATTEMPTS);
+    }
+
+    private DingConnectTransferResult attemptWithRetry(
+            String skuCode,
+            BigDecimal sendValue,
+            String sendCurrencyIso,
+            String accountNumber,
+            String distributorRef,
+            boolean validateOnly,
+            int maxAttempts
+    ) {
+        DingConnectTransferResult last = null;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            last = attemptOnce(skuCode, sendValue, sendCurrencyIso, accountNumber, distributorRef, validateOnly);
+            if (last.success() || !last.retryable()) {
+                return last;
+            }
+            if (attempt < maxAttempts) {
+                long delay = RETRY_BASE_DELAY_MS * attempt;
+                log.warn("DingConnect {} tentativa {}/{} falhou (transitorio) para sku={} ref={}: {} -- a repetir em {}ms",
+                        validateOnly ? "validateTransfer" : "sendTransfer",
+                        attempt, maxAttempts, skuCode, distributorRef, last.errorMessage(), delay);
+                sleep(delay);
+            }
+        }
+        log.error("DingConnect {} esgotou {} tentativas para sku={} ref={}: {}",
+                validateOnly ? "validateTransfer" : "sendTransfer",
+                maxAttempts, skuCode, distributorRef, last != null ? last.errorMessage() : "sem resultado");
+        return last;
+    }
+
+    private DingConnectTransferResult attemptOnce(
+            String skuCode,
+            BigDecimal sendValue,
+            String sendCurrencyIso,
+            String accountNumber,
+            String distributorRef,
+            boolean validateOnly
     ) {
         // A DingConnect espera o AccountNumber so com digitos (sem "+", espacos ou outros
         // caracteres) -- guardamos o numero no formato +244... para exibicao, mas enviamos aqui
@@ -85,25 +156,30 @@ public class DingConnectService {
         body.put("SendCurrencyIso", sendCurrencyIso);
         body.put("AccountNumber", cleanAccountNumber);
         body.put("DistributorRef", distributorRef);
-        body.put("ValidateOnly", false);
+        body.put("ValidateOnly", validateOnly);
 
         try {
             String jsonBody = MAPPER.writeValueAsString(body);
             CurlResult result = executeCurl("/api/V1/SendTransfer", jsonBody);
 
             if (result.exitCode() != 0) {
-                log.error("curl falhou (exit {}) ao chamar DingConnect SendTransfer para sku={} distributorRef={}: {}",
+                // curl nao conseguiu sequer completar o pedido (proxy em baixo, timeout, DNS...).
+                // Nada foi processado do lado da DingConnect -> seguro repetir.
+                log.error("curl falhou (exit {}) ao chamar DingConnect SendTransfer para sku={} ref={}: {}",
                         result.exitCode(), skuCode, distributorRef, result.output());
                 return DingConnectTransferResult.failure(
-                        truncate("Erro de comunicacao com a DingConnect (curl exit " + result.exitCode() + "): " + result.output())
+                        truncate("Erro de comunicacao com a DingConnect (curl exit " + result.exitCode() + ")"),
+                        ErrorKind.SERVICE_UNAVAILABLE
                 );
             }
 
             if (result.statusCode() < 200 || result.statusCode() >= 300) {
-                log.error("DingConnect SendTransfer devolveu HTTP {} para sku={} distributorRef={}: {}",
-                        result.statusCode(), skuCode, distributorRef, result.body());
+                ErrorKind kind = classifyHttpStatus(result.statusCode(), result.body());
+                log.error("DingConnect SendTransfer devolveu HTTP {} ({}) para sku={} ref={}: {}",
+                        result.statusCode(), kind, skuCode, distributorRef, result.body());
                 return DingConnectTransferResult.failure(
-                        truncate("Erro de comunicacao com a DingConnect: " + result.statusCode() + " " + result.body())
+                        truncate("Erro de comunicacao com a DingConnect: " + result.statusCode() + " " + result.body()),
+                        kind
                 );
             }
 
@@ -115,19 +191,88 @@ public class DingConnectService {
 
             if (success) {
                 return DingConnectTransferResult.success(
-                        response.transferRecord().transferId().transferRef(),
+                        response.transferRecord().transferId() != null
+                                ? response.transferRecord().transferId().transferRef() : null,
                         response.transferRecord().processingState()
                 );
             }
 
-            String errorSummary = response.errorCodes() == null || response.errorCodes().isEmpty()
+            List<String> codes = response.errorCodes() == null ? List.of()
+                    : response.errorCodes().stream().map(DingConnectError::code).filter(c -> c != null).toList();
+            ErrorKind kind = classifyErrorCodes(codes, response.transferRecord());
+
+            if (kind == ErrorKind.ALREADY_SENT) {
+                log.warn("DingConnect SendTransfer: DistributorRef {} ja usado -- transferencia anterior considerada entregue.", distributorRef);
+                return DingConnectTransferResult.alreadySent();
+            }
+
+            String errorSummary = codes.isEmpty()
                     ? "Estado: " + (response.transferRecord() != null ? response.transferRecord().processingState() : "desconhecido")
-                    : response.errorCodes().stream().map(DingConnectError::code).reduce((a, b) -> a + ", " + b).orElse("erro desconhecido");
-            log.error("DingConnect SendTransfer nao teve sucesso para sku={} distributorRef={}: {}", skuCode, distributorRef, errorSummary);
-            return DingConnectTransferResult.failure(truncate(errorSummary));
+                    : String.join(", ", codes);
+            log.error("DingConnect SendTransfer sem sucesso ({}) para sku={} ref={}: {}", kind, skuCode, distributorRef, errorSummary);
+            return DingConnectTransferResult.failure(truncate(errorSummary), kind);
         } catch (Exception e) {
-            log.error("Erro ao chamar DingConnect SendTransfer para sku={} distributorRef={}", skuCode, distributorRef, e);
-            return DingConnectTransferResult.failure(truncate("Erro de comunicacao com a DingConnect: " + e.getMessage()));
+            // Excecao inesperada (parsing, IO) -- tratar como transitorio; a rede pode ter caido a meio.
+            log.error("Erro ao chamar DingConnect SendTransfer para sku={} ref={}", skuCode, distributorRef, e);
+            return DingConnectTransferResult.failure(
+                    truncate("Erro de comunicacao com a DingConnect: " + e.getMessage()),
+                    ErrorKind.SERVICE_UNAVAILABLE
+            );
+        }
+    }
+
+    private ErrorKind classifyHttpStatus(int status, String body) {
+        String lower = body == null ? "" : body.toLowerCase(Locale.ROOT);
+        // O 401 "AuthenticationFailed" do SendTransfer e intermitente e acontece antes de a
+        // transferencia ser criada -> transitorio, deve ser repetido.
+        if (status == 401 || status == 403 || status == 408 || status == 429 || status >= 500) {
+            return ErrorKind.SERVICE_UNAVAILABLE;
+        }
+        if (lower.contains("accountnumber") || lower.contains("account number") || lower.contains("invalidaccount")) {
+            return ErrorKind.INVALID_ACCOUNT;
+        }
+        if (lower.contains("insufficient") || lower.contains("balance")) {
+            return ErrorKind.INSUFFICIENT_FLOAT;
+        }
+        if (lower.contains("sku") || lower.contains("sendvalue") || lower.contains("sendcurrency")
+                || lower.contains("parametercombination") || lower.contains("product")) {
+            return ErrorKind.INVALID_PRODUCT;
+        }
+        return ErrorKind.UNKNOWN;
+    }
+
+    private ErrorKind classifyErrorCodes(List<String> codes, TransferRecord record) {
+        String joined = String.join(" ", codes).toLowerCase(Locale.ROOT);
+        if (joined.contains("authenticationfailed") || joined.contains("unavailable") || joined.contains("timeout")) {
+            return ErrorKind.SERVICE_UNAVAILABLE;
+        }
+        if (joined.contains("distributorref") || joined.contains("alreadyused") || joined.contains("duplicate")) {
+            return ErrorKind.ALREADY_SENT;
+        }
+        if (joined.contains("account")) {
+            return ErrorKind.INVALID_ACCOUNT;
+        }
+        if (joined.contains("insufficient") || joined.contains("float") || joined.contains("balance")) {
+            return ErrorKind.INSUFFICIENT_FLOAT;
+        }
+        if (joined.contains("sku") || joined.contains("sendvalue") || joined.contains("sendcurrency")
+                || joined.contains("parametercombination") || joined.contains("product")) {
+            return ErrorKind.INVALID_PRODUCT;
+        }
+        // Sem codigos mas com um TransferRecord em estado terminal de falha -> falha real da operadora.
+        if (codes.isEmpty() && record != null && record.processingState() != null
+                && (record.processingState().equalsIgnoreCase("Failed")
+                || record.processingState().equalsIgnoreCase("Declined"))) {
+            return ErrorKind.INVALID_ACCOUNT;
+        }
+        return ErrorKind.UNKNOWN;
+    }
+
+    private void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

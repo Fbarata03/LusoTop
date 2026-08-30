@@ -7,6 +7,7 @@ import com.lusotop.api.country.CountryRepository;
 import com.lusotop.api.currency.ExchangeRateService;
 import com.lusotop.api.delivery.DingConnectService;
 import com.lusotop.api.delivery.DingConnectTransferResult;
+import com.lusotop.api.delivery.DingConnectTransferResult.ErrorKind;
 import com.lusotop.api.email.EmailService;
 import com.lusotop.api.notification.NotificationService;
 import com.lusotop.api.operator.Operator;
@@ -103,6 +104,11 @@ public class OrderService {
                 ? BigDecimal.valueOf(product.getPayerAmountCents(), 2)
                 : convert(product.getAmount(), product.getCurrency(), payerCurrency);
 
+        // Valida a recarga junto da DingConnect ANTES de cobrar o cliente. Se o numero for
+        // invalido para a operadora, ou se o servico de entrega estiver indisponivel, o cliente
+        // nunca chega a pagar -- em vez de pagar e receber um reembolso com uma mensagem alarmante.
+        preValidateDelivery(product, payerAmount, payerCurrency, request.phoneNumber());
+
         Order order = new Order();
         order.setUser(user);
         order.setCountry(country);
@@ -192,34 +198,22 @@ public class OrderService {
         if (order.getDeliveryStatus() == DeliveryStatus.DELIVERED) return;
 
         AirtimeProduct product = order.getProduct();
-        if (product.getDingconnectSkuCode() == null || product.getDingconnectSkuCode().isBlank()) {
+        DeliveryParams params;
+        try {
+            params = resolveDeliveryParams(product, order.getPayerAmount(), order.getPayerCurrency());
+        } catch (DeliveryConfigException e) {
             order.setDeliveryStatus(DeliveryStatus.FAILED);
-            order.setDeliveryError("Produto sem SKU DingConnect configurado.");
-            log.error("Paid order {} has no DingConnect SKU mapped for product {}", order.getId(), product.getId());
+            order.setDeliveryError(e.getMessage());
+            log.error("Paid order {} tem produto {} mal configurado para entrega: {}", order.getId(), product.getId(), e.getMessage());
             refundFailedDelivery(order);
             notificationService.notifyRechargeFailed(order);
             return;
         }
 
-        boolean rangeProduct = product.isDingconnectSendValueRange();
-        if (!rangeProduct && (product.getDingconnectSendValue() == null || product.getDingconnectSendCurrency() == null)) {
-            // Produtos de valor fixo tem de usar o SendValue/SendCurrencyIso exato que a DingConnect
-            // define para o SKU (ver GetProducts) -- nao o montante em moeda local. Sem isso
-            // configurado, a DingConnect rejeita sempre com ParameterCombinationInvalid.
-            order.setDeliveryStatus(DeliveryStatus.FAILED);
-            order.setDeliveryError("Produto sem SendValue/SendCurrency da DingConnect configurado.");
-            log.error("Paid order {} has product {} without DingConnect send value configured", order.getId(), product.getId());
-            refundFailedDelivery(order);
-            notificationService.notifyRechargeFailed(order);
-            return;
-        }
-
-        BigDecimal sendValue = rangeProduct ? order.getPayerAmount() : product.getDingconnectSendValue();
-        String sendCurrency = rangeProduct ? order.getPayerCurrency() : product.getDingconnectSendCurrency();
         DingConnectTransferResult result = dingConnectService.sendTransfer(
-                product.getDingconnectSkuCode(),
-                sendValue,
-                sendCurrency,
+                params.sku(),
+                params.sendValue(),
+                params.sendCurrency(),
                 order.getPhoneNumber(),
                 "lusotop-order-" + order.getId()
         );
@@ -227,15 +221,78 @@ public class OrderService {
         if (result.success()) {
             order.setDeliveryStatus(DeliveryStatus.DELIVERED);
             order.setDingconnectTransferRef(result.transferRef());
-            order.setDeliveryError(null);
+            order.setDeliveryError(result.errorKind() == ErrorKind.ALREADY_SENT
+                    ? "Entrega confirmada (DistributorRef ja usado num envio anterior)."
+                    : null);
+            if (result.errorKind() == ErrorKind.ALREADY_SENT) {
+                log.warn("Order {} marcada como entregue via ALREADY_SENT -- sem novo envio, sem reembolso.", order.getId());
+            }
             notificationService.notifyRechargeDelivered(order);
             sendReceiptEmail(order);
         } else {
             order.setDeliveryStatus(DeliveryStatus.FAILED);
             order.setDeliveryError(result.errorMessage());
-            log.error("Paid order {} could not be delivered: {}", order.getId(), result.errorMessage());
+            log.error("Paid order {} nao pode ser entregue ({}): {}", order.getId(), result.errorKind(), result.errorMessage());
             refundFailedDelivery(order);
             notificationService.notifyRechargeFailed(order);
+        }
+    }
+
+    /**
+     * Corre a validacao da DingConnect (ValidateOnly) antes do checkout. Lanca BadRequestException
+     * com uma mensagem util para o cliente se a recarga nao puder seguir -- sem nunca cobrar.
+     */
+    private void preValidateDelivery(AirtimeProduct product, BigDecimal payerAmount, String payerCurrency, String phoneNumber) {
+        DeliveryParams params;
+        try {
+            params = resolveDeliveryParams(product, payerAmount, payerCurrency);
+        } catch (DeliveryConfigException e) {
+            log.error("Produto {} mal configurado para entrega DingConnect: {}", product.getId(), e.getMessage());
+            throw new BadRequestException("DELIVERY_UNAVAILABLE",
+                    "Esta recarga está temporariamente indisponível. Tenta novamente mais tarde ou escolhe outro valor.");
+        }
+
+        DingConnectTransferResult check = dingConnectService.validateTransfer(
+                params.sku(), params.sendValue(), params.sendCurrency(), phoneNumber, "lusotop-precheck");
+
+        if (check.success() || check.errorKind() == ErrorKind.ALREADY_SENT) {
+            return;
+        }
+
+        if (check.errorKind() == ErrorKind.INVALID_ACCOUNT) {
+            throw new BadRequestException("INVALID_PHONE",
+                    "O número indicado não parece válido para a operadora selecionada. Confirma o número (com indicativo do país) e tenta de novo.");
+        }
+
+        // SERVICE_UNAVAILABLE, INVALID_PRODUCT, INSUFFICIENT_FLOAT, UNKNOWN -> problema nosso/DingConnect.
+        log.error("Pré-validação DingConnect falhou ({}) para sku={} numero={}: {}",
+                check.errorKind(), params.sku(), phoneNumber, check.errorMessage());
+        throw new BadRequestException("DELIVERY_UNAVAILABLE",
+                "A recarga para esta operadora está temporariamente indisponível. Já estamos a tratar disso — tenta novamente dentro de alguns minutos.");
+    }
+
+    private DeliveryParams resolveDeliveryParams(AirtimeProduct product, BigDecimal payerAmount, String payerCurrency) {
+        if (product.getDingconnectSkuCode() == null || product.getDingconnectSkuCode().isBlank()) {
+            throw new DeliveryConfigException("Produto sem SKU DingConnect configurado.");
+        }
+        boolean rangeProduct = product.isDingconnectSendValueRange();
+        if (!rangeProduct && (product.getDingconnectSendValue() == null || product.getDingconnectSendCurrency() == null)) {
+            // Produtos de valor fixo tem de usar o SendValue/SendCurrencyIso exato que a DingConnect
+            // define para o SKU (ver GetProducts) -- nao o montante em moeda local. Sem isso
+            // configurado, a DingConnect rejeita sempre com ParameterCombinationInvalid.
+            throw new DeliveryConfigException("Produto sem SendValue/SendCurrency da DingConnect configurado.");
+        }
+        BigDecimal sendValue = rangeProduct ? payerAmount : product.getDingconnectSendValue();
+        String sendCurrency = rangeProduct ? payerCurrency : product.getDingconnectSendCurrency();
+        return new DeliveryParams(product.getDingconnectSkuCode(), sendValue, sendCurrency);
+    }
+
+    private record DeliveryParams(String sku, BigDecimal sendValue, String sendCurrency) {
+    }
+
+    private static class DeliveryConfigException extends RuntimeException {
+        DeliveryConfigException(String message) {
+            super(message);
         }
     }
 
