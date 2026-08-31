@@ -34,12 +34,19 @@ export function Footer() {
           <FooterColumn title="Legal" links={LEGAL_LINKS} />
 
           <div>
-            <h3 className="text-sm font-semibold text-white">Países</h3>
+            <h3 className="text-sm font-semibold text-white">
+              Recarga de saldo por país
+            </h3>
             <ul className="mt-3 space-y-2 text-sm">
               {CPLP_COUNTRIES.map((country) => (
                 <li key={country.isoCode}>
-                  <span className="text-white/50">{country.isoCode}</span>{" "}
-                  {country.name}
+                  <Link
+                    href={`/paises/${country.isoCode.toLowerCase()}`}
+                    className="transition-colors hover:text-white"
+                  >
+                    <span className="text-white/50">{country.isoCode}</span>{" "}
+                    Recarga {country.name}
+                  </Link>
                 </li>
               ))}
             </ul>

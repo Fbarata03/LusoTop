@@ -16,9 +16,28 @@ const lora = Lora({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://lusotop.online"),
-  title: "LusoTop | Recargas para a comunidade lusófona",
+  title: {
+    default:
+      "LusoTop — Recarga de saldo online para Angola, Brasil, Portugal e CPLP",
+    template: "%s | LusoTop",
+  },
   description:
-    "Recargas móveis rápidas e simples para os países da CPLP. Angola, Brasil, Cabo Verde, Guiné-Bissau, Moçambique, Portugal e São Tomé e Príncipe.",
+    "Recarregue saldo de telemóvel online para Angola, Brasil, Cabo Verde, Guiné-Bissau, Moçambique, Portugal e São Tomé e Príncipe. Entrega imediata, pagamento seguro em euros, comprovativo por email.",
+  keywords: [
+    "recarga de saldo",
+    "recarregar saldo online",
+    "carregar telemóvel",
+    "recarga Angola",
+    "recarga Brasil",
+    "recarga Portugal",
+    "recarga Moçambique",
+    "recarga Cabo Verde",
+    "recarga Unitel",
+    "recarga Movicel",
+    "recarga MEO",
+    "recarga Vodacom",
+    "top-up CPLP",
+  ],
   alternates: {
     canonical: "/",
   },
@@ -26,9 +45,10 @@ export const metadata: Metadata = {
     google: "WTsTt58-RwTSRIryDtQvWN_POEOUI5WQkTmmZiU2E94",
   },
   openGraph: {
-    title: "LusoTop | Recargas para a comunidade lusófona",
+    title:
+      "LusoTop — Recarga de saldo online para Angola, Brasil, Portugal e CPLP",
     description:
-      "Recargas móveis rápidas e simples para os países da CPLP. Todos os países da CPLP disponíveis.",
+      "Recarregue saldo de telemóvel online para todos os países da CPLP. Entrega imediata, pagamento seguro em euros.",
     url: "https://lusotop.online",
     siteName: "LusoTop",
     locale: "pt_PT",
@@ -51,6 +71,30 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="min-h-full flex flex-col font-sans">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  name: "LusoTop",
+                  url: "https://lusotop.online",
+                  logo: "https://lusotop.online/icon.png",
+                  description:
+                    "Recargas de saldo móvel online para os países de língua portuguesa (CPLP).",
+                },
+                {
+                  "@type": "WebSite",
+                  name: "LusoTop",
+                  url: "https://lusotop.online",
+                  inLanguage: "pt-PT",
+                },
+              ],
+            }),
+          }}
+        />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
