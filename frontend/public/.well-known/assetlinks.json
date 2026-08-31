@@ -5,8 +5,7 @@
       "namespace": "android_app",
       "package_name": "online.lusotop.twa",
       "sha256_cert_fingerprints": [
-        "SUBSTITUIR_PELO_SHA256_DA_CHAVE_DE_UPLOAD_DO_PWABUILDER",
-        "SUBSTITUIR_PELO_SHA256_DO_APP_SIGNING_DA_PLAY_CONSOLE"
+        "95:39:B4:33:89:13:95:EE:A4:EF:5A:03:AA:E2:C3:16:42:59:A6:32:7F:B5:D2:42:0C:CA:D8:AB:8A:13:C0:AD"
       ]
     }
   }

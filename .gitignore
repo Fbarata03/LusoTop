@@ -27,6 +27,12 @@ skills-lock.json
 # Claude Code local session/permission state
 .claude/
 
+# Android / TWA signing — NUNCA commitar
+*.keystore
+signing-key-info.txt
+*.aab
+*.apk
+
 # IDE
 .idea/
 .vscode/
