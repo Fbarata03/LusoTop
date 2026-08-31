@@ -1,9 +1,15 @@
 {
+  "id": "/",
   "name": "LusoTop",
   "short_name": "LusoTop",
   "description": "Recargas móveis rápidas e simples para os países da CPLP.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "any",
+  "lang": "pt-PT",
+  "dir": "ltr",
+  "categories": ["finance", "utilities"],
   "background_color": "#0f2a1e",
   "theme_color": "#12592F",
   "icons": [
@@ -27,7 +33,13 @@
       "src": "/icon.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
