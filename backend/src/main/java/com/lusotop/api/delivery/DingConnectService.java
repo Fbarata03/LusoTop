@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -124,6 +125,81 @@ public class DingConnectService {
             String distributorRef
     ) {
         return attemptWithRetry(skuCode, sendValue, sendCurrencyIso, accountNumber, distributorRef, false, SEND_ATTEMPTS);
+    }
+
+    /**
+     * Catalogo real e atual da DingConnect (GetProducts). Fonte autoritativa para o valor exato
+     * que cada SKU custa (Minimum/Maximum.SendValue) e se e um SKU de valor fixo ou "range".
+     * Usado pela sincronizacao de catalogo -- nunca no caminho de um pedido.
+     *
+     * @param providerCodes se nao vazio, filtra o pedido a estes provider codes (resposta mais
+     *                      pequena); vazio devolve todo o catalogo acessivel a conta.
+     */
+    public List<DingProduct> getProducts(Collection<String> providerCodes) {
+        try {
+            CurlResult result = executeCurl("GET", getProductsPath(providerCodes), null);
+            if (result.exitCode() != 0) {
+                throw new IllegalStateException("GetProducts: curl falhou (exit " + result.exitCode()
+                        + "): " + truncate(result.output()));
+            }
+            if (result.statusCode() < 200 || result.statusCode() >= 300) {
+                throw new IllegalStateException("GetProducts: HTTP " + result.statusCode()
+                        + " -- " + truncate(result.body()));
+            }
+            GetProductsResponse response = MAPPER.readValue(result.body(), GetProductsResponse.class);
+            if (response.items() == null) {
+                return List.of();
+            }
+            return response.items();
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException("GetProducts: erro ao obter o catalogo da DingConnect: " + e.getMessage(), e);
+        }
+    }
+
+    /** Resposta bruta do GetProducts (para inspecao/depuracao antes de sincronizar). */
+    public String getProductsRaw(Collection<String> providerCodes) {
+        try {
+            CurlResult result = executeCurl("GET", getProductsPath(providerCodes), null);
+            return "exit=" + result.exitCode() + " http=" + result.statusCode() + "\n" + result.body();
+        } catch (Exception e) {
+            throw new IllegalStateException("GetProducts raw falhou: " + e.getMessage(), e);
+        }
+    }
+
+    private String getProductsPath(Collection<String> providerCodes) {
+        StringBuilder path = new StringBuilder("/api/V1/GetProducts");
+        if (providerCodes != null && !providerCodes.isEmpty()) {
+            String joined = String.join(",", providerCodes).replace(" ", "");
+            path.append("?ProviderCodes=").append(joined);
+        }
+        return path.toString();
+    }
+
+    public record DingProduct(
+            @JsonProperty("SkuCode") String skuCode,
+            @JsonProperty("ProviderCode") String providerCode,
+            @JsonProperty("Benefits") List<String> benefits,
+            @JsonProperty("Minimum") DingPriceBound minimum,
+            @JsonProperty("Maximum") DingPriceBound maximum,
+            @JsonProperty("CommissionRate") BigDecimal commissionRate
+    ) {
+    }
+
+    public record DingPriceBound(
+            @JsonProperty("SendValue") BigDecimal sendValue,
+            @JsonProperty("ReceiveValue") BigDecimal receiveValue,
+            @JsonProperty("SendCurrencyIso") String sendCurrencyIso,
+            @JsonProperty("ReceiveCurrencyIso") String receiveCurrencyIso
+    ) {
+    }
+
+    private record GetProductsResponse(
+            @JsonProperty("Items") List<DingProduct> items,
+            @JsonProperty("ResultCode") Integer resultCode,
+            @JsonProperty("ErrorCodes") List<DingConnectError> errorCodes
+    ) {
     }
 
     private DingConnectTransferResult attemptWithRetry(
@@ -326,6 +402,10 @@ public class DingConnectService {
     }
 
     private CurlResult executeCurl(String path, String jsonBody) throws Exception {
+        return executeCurl("POST", path, jsonBody);
+    }
+
+    private CurlResult executeCurl(String method, String path, String jsonBody) throws Exception {
         List<String> command = new ArrayList<>();
         command.add("curl");
         command.add("-s");
@@ -336,7 +416,7 @@ public class DingConnectService {
         command.add("-w");
         command.add("\n%{http_code}");
         command.add("-X");
-        command.add("POST");
+        command.add(method);
         command.add(baseUrl + path);
         // Forca o pedido (incluindo o salto proxy -> DingConnect) a sair por IPv4 -- ver nota em
         // cachedIpv4. Se a resolucao falhar, segue sem --connect-to (melhor tentar do que abortar).
@@ -356,13 +436,17 @@ public class DingConnectService {
             command.add("-x");
             command.add(proxyUrl);
         }
-        command.add("--data-binary");
-        command.add("@-");
+        if (jsonBody != null) {
+            command.add("--data-binary");
+            command.add("@-");
+        }
 
         ProcessBuilder processBuilder = new ProcessBuilder(command).redirectErrorStream(true);
         Process process = processBuilder.start();
         try (OutputStream stdin = process.getOutputStream()) {
-            stdin.write(jsonBody.getBytes(StandardCharsets.UTF_8));
+            if (jsonBody != null) {
+                stdin.write(jsonBody.getBytes(StandardCharsets.UTF_8));
+            }
         }
         String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         boolean finished = process.waitFor(CURL_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
