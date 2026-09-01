@@ -330,24 +330,24 @@ public class OrderService {
         }
     }
 
-    /** Melhor estimativa do que esta recarga nos custa, em EUR. null se nao houver base fiavel. */
+    /**
+     * Melhor estimativa do que esta recarga nos custa, em EUR: o valor que e entregue ao cliente
+     * (product.amount na sua moeda), convertido para EUR. Para recargas de saldo o custo real e
+     * quase sempre <= a este valor (a DingConnect da desconto de distribuidor), por isso usa-lo
+     * como base nunca subestima a margem. Nao usa dingconnect_send_value porque, para os produtos
+     * nao-EUR, esse campo ainda pode estar mal preenchido (corrige-se com o resync de catalogo).
+     * null se nao houver taxa de cambio.
+     */
     private BigDecimal estimatedCostEur(AirtimeProduct product) {
+        if (product.getAmount() == null || product.getCurrency() == null) {
+            return null;
+        }
         try {
-            if (product.isDingconnectSendValueRange()) {
-                if (product.getAmount() == null || product.getCurrency() == null) {
-                    return null;
-                }
-                return convert(product.getAmount(), product.getCurrency(), "EUR");
-            }
-            if (product.getDingconnectSendValue() != null) {
-                String currency = product.getDingconnectSendCurrency() != null
-                        ? product.getDingconnectSendCurrency() : "EUR";
-                return convert(product.getDingconnectSendValue(), currency, "EUR");
-            }
+            return convert(product.getAmount(), product.getCurrency(), "EUR");
         } catch (RuntimeException e) {
             log.warn("Guardiao de margem: sem cambio para estimar o custo do produto {}: {}", product.getId(), e.getMessage());
+            return null;
         }
-        return null;
     }
 
     private record DeliveryParams(String sku, BigDecimal sendValue, String sendCurrency) {
