@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { Menu, X, User as UserIcon } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { LogoMark } from "@/components/illustrations/LogoMark";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
@@ -51,8 +50,6 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <ThemeToggle className="hidden md:flex" />
-
           {!loading && user && <NotificationBell />}
 
           {!loading && user ? (
@@ -127,7 +124,6 @@ export function Header() {
             </a>
           ))}
           <div className="mt-2 flex items-center gap-2 border-t border-white/10 pt-3">
-            <ThemeToggle />
             {user ? (
               <>
                 {user.role === "ADMIN" && (
