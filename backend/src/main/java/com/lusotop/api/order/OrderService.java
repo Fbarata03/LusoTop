@@ -104,10 +104,15 @@ public class OrderService {
                 ? BigDecimal.valueOf(product.getPayerAmountCents(), 2)
                 : convert(product.getAmount(), product.getCurrency(), payerCurrency);
 
+        // Guardiao anti-prejuizo: nunca cria um checkout cujo preco nao cobre o custo real da
+        // recarga + taxa Stripe + margem minima. Protege contra erros no catalogo (preco ou custo
+        // mal configurados) -- no pior caso o produto fica indisponivel, nunca dando prejuizo.
+        guardMargin(product, payerAmount);
+
         // Valida a recarga junto da DingConnect ANTES de cobrar o cliente. Se o numero for
         // invalido para a operadora, ou se o servico de entrega estiver indisponivel, o cliente
         // nunca chega a pagar -- em vez de pagar e receber um reembolso com uma mensagem alarmante.
-        preValidateDelivery(product, payerAmount, payerCurrency, request.phoneNumber());
+        preValidateDelivery(product, request.phoneNumber());
 
         Order order = new Order();
         order.setUser(user);
@@ -200,7 +205,7 @@ public class OrderService {
         AirtimeProduct product = order.getProduct();
         DeliveryParams params;
         try {
-            params = resolveDeliveryParams(product, order.getPayerAmount(), order.getPayerCurrency());
+            params = resolveDeliveryParams(product);
         } catch (DeliveryConfigException e) {
             order.setDeliveryStatus(DeliveryStatus.FAILED);
             order.setDeliveryError(e.getMessage());
@@ -242,10 +247,10 @@ public class OrderService {
      * Corre a validacao da DingConnect (ValidateOnly) antes do checkout. Lanca BadRequestException
      * com uma mensagem util para o cliente se a recarga nao puder seguir -- sem nunca cobrar.
      */
-    private void preValidateDelivery(AirtimeProduct product, BigDecimal payerAmount, String payerCurrency, String phoneNumber) {
+    private void preValidateDelivery(AirtimeProduct product, String phoneNumber) {
         DeliveryParams params;
         try {
-            params = resolveDeliveryParams(product, payerAmount, payerCurrency);
+            params = resolveDeliveryParams(product);
         } catch (DeliveryConfigException e) {
             log.error("Produto {} mal configurado para entrega DingConnect: {}", product.getId(), e.getMessage());
             throw new BadRequestException("DELIVERY_UNAVAILABLE",
@@ -271,20 +276,78 @@ public class OrderService {
                 "A recarga para esta operadora está temporariamente indisponível. Já estamos a tratar disso — tenta novamente dentro de alguns minutos.");
     }
 
-    private DeliveryParams resolveDeliveryParams(AirtimeProduct product, BigDecimal payerAmount, String payerCurrency) {
+    private DeliveryParams resolveDeliveryParams(AirtimeProduct product) {
         if (product.getDingconnectSkuCode() == null || product.getDingconnectSkuCode().isBlank()) {
             throw new DeliveryConfigException("Produto sem SKU DingConnect configurado.");
         }
-        boolean rangeProduct = product.isDingconnectSendValueRange();
-        if (!rangeProduct && (product.getDingconnectSendValue() == null || product.getDingconnectSendCurrency() == null)) {
+        if (product.isDingconnectSendValueRange()) {
+            // SKU de valor livre: o SendValue e o montante que o cliente ESCOLHEU entregar
+            // (product.amount, na moeda do produto) -- nao o que pagou (payerAmount, que ja inclui
+            // a margem). Enviar payerAmount aqui anulava a margem: a DingConnect debita a conta
+            // pelo valor enviado, por isso mandar 23,60 quando o cliente pediu 20 nao deixava lucro.
+            if (product.getAmount() == null || product.getCurrency() == null) {
+                throw new DeliveryConfigException("Produto range sem amount/currency configurado.");
+            }
+            return new DeliveryParams(product.getDingconnectSkuCode(), product.getAmount(), product.getCurrency());
+        }
+        if (product.getDingconnectSendValue() == null || product.getDingconnectSendCurrency() == null) {
             // Produtos de valor fixo tem de usar o SendValue/SendCurrencyIso exato que a DingConnect
             // define para o SKU (ver GetProducts) -- nao o montante em moeda local. Sem isso
             // configurado, a DingConnect rejeita sempre com ParameterCombinationInvalid.
             throw new DeliveryConfigException("Produto sem SendValue/SendCurrency da DingConnect configurado.");
         }
-        BigDecimal sendValue = rangeProduct ? payerAmount : product.getDingconnectSendValue();
-        String sendCurrency = rangeProduct ? payerCurrency : product.getDingconnectSendCurrency();
-        return new DeliveryParams(product.getDingconnectSkuCode(), sendValue, sendCurrency);
+        return new DeliveryParams(
+                product.getDingconnectSkuCode(),
+                product.getDingconnectSendValue(),
+                product.getDingconnectSendCurrency());
+    }
+
+    private static final BigDecimal STRIPE_FEE_RATE = new BigDecimal("0.015");
+    private static final BigDecimal MIN_MARGIN_EUR = new BigDecimal("1.00");
+
+    /**
+     * Bloqueia a criacao do pedido se o preco ao cliente nao cobrir o custo real da recarga + a
+     * taxa da Stripe + uma margem liquida minima. E uma rede de seguranca contra dados de catalogo
+     * errados: no pior caso o cliente ve "temporariamente indisponivel", nunca ha uma venda com
+     * prejuizo.
+     */
+    private void guardMargin(AirtimeProduct product, BigDecimal payerAmount) {
+        BigDecimal costEur = estimatedCostEur(product);
+        if (costEur == null) {
+            log.warn("Guardiao de margem: produto {} sem custo estimavel em EUR -- segue sem bloquear (ValidateOnly da DingConnect ainda corre).",
+                    product.getId());
+            return;
+        }
+        BigDecimal netAfterFee = payerAmount.multiply(BigDecimal.ONE.subtract(STRIPE_FEE_RATE));
+        BigDecimal margin = netAfterFee.subtract(costEur);
+        if (margin.compareTo(MIN_MARGIN_EUR) < 0) {
+            log.error("GUARDIAO DE MARGEM bloqueou o produto {} ({} {} / sku {}): cliente pagaria {} EUR, "
+                            + "custo estimado {} EUR, margem liquida {} EUR < minimo {} EUR.",
+                    product.getId(), product.getAmount(), product.getCurrency(), product.getDingconnectSkuCode(),
+                    payerAmount, costEur, margin, MIN_MARGIN_EUR);
+            throw new BadRequestException("DELIVERY_UNAVAILABLE",
+                    "Esta recarga está temporariamente indisponível. Escolhe outro valor ou tenta novamente mais tarde.");
+        }
+    }
+
+    /** Melhor estimativa do que esta recarga nos custa, em EUR. null se nao houver base fiavel. */
+    private BigDecimal estimatedCostEur(AirtimeProduct product) {
+        try {
+            if (product.isDingconnectSendValueRange()) {
+                if (product.getAmount() == null || product.getCurrency() == null) {
+                    return null;
+                }
+                return convert(product.getAmount(), product.getCurrency(), "EUR");
+            }
+            if (product.getDingconnectSendValue() != null) {
+                String currency = product.getDingconnectSendCurrency() != null
+                        ? product.getDingconnectSendCurrency() : "EUR";
+                return convert(product.getDingconnectSendValue(), currency, "EUR");
+            }
+        } catch (RuntimeException e) {
+            log.warn("Guardiao de margem: sem cambio para estimar o custo do produto {}: {}", product.getId(), e.getMessage());
+        }
+        return null;
     }
 
     private record DeliveryParams(String sku, BigDecimal sendValue, String sendCurrency) {
