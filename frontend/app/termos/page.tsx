@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/layout/LegalPage";
 
-export const metadata: Metadata = { title: "Termos de Serviço | LusoTop" };
+export const metadata: Metadata = {
+  title: "Termos de Serviço | LusoTop",
+  robots: { index: false, follow: true },
+};
 
 export default function TermosPage() {
   return (
