@@ -331,23 +331,30 @@ public class OrderService {
     }
 
     /**
-     * Melhor estimativa do que esta recarga nos custa, em EUR: o valor que e entregue ao cliente
-     * (product.amount na sua moeda), convertido para EUR. Para recargas de saldo o custo real e
-     * quase sempre <= a este valor (a DingConnect da desconto de distribuidor), por isso usa-lo
-     * como base nunca subestima a margem. Nao usa dingconnect_send_value porque, para os produtos
-     * nao-EUR, esse campo ainda pode estar mal preenchido (corrige-se com o resync de catalogo).
-     * null se nao houver taxa de cambio.
+     * Melhor estimativa do que esta recarga nos custa, em EUR:
+     *  - produto "range": o valor que o cliente escolheu entregar (product.amount), convertido;
+     *  - produto de valor fixo: o dingconnect_send_value -- o montante EXATO que a DingConnect
+     *    debita da nossa conta para este SKU (as taxas efetivas da DingConnect sao bastante
+     *    piores que o mercado, por isso o valor de face convertido subestimaria o custo).
+     * null se nao houver base fiavel.
      */
     private BigDecimal estimatedCostEur(AirtimeProduct product) {
-        if (product.getAmount() == null || product.getCurrency() == null) {
-            return null;
-        }
         try {
-            return convert(product.getAmount(), product.getCurrency(), "EUR");
+            if (product.isDingconnectSendValueRange()) {
+                if (product.getAmount() == null || product.getCurrency() == null) {
+                    return null;
+                }
+                return convert(product.getAmount(), product.getCurrency(), "EUR");
+            }
+            if (product.getDingconnectSendValue() != null) {
+                String currency = product.getDingconnectSendCurrency() != null
+                        ? product.getDingconnectSendCurrency() : "EUR";
+                return convert(product.getDingconnectSendValue(), currency, "EUR");
+            }
         } catch (RuntimeException e) {
             log.warn("Guardiao de margem: sem cambio para estimar o custo do produto {}: {}", product.getId(), e.getMessage());
-            return null;
         }
+        return null;
     }
 
     private record DeliveryParams(String sku, BigDecimal sendValue, String sendCurrency) {
