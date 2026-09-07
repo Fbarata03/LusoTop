@@ -54,3 +54,26 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+      # Avisa o Bing/Yandex (IndexNow) de que o site foi atualizado. Chave publica em
+      # /1c2e50b61c8fe5c09678c726b67de985.txt. Nao falha o deploy se o ping falhar.
+      - name: Ping IndexNow
+        continue-on-error: true
+        run: |
+          curl -sS -m 30 -X POST "https://api.indexnow.org/indexnow" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "host": "lusotop.online",
+              "key": "1c2e50b61c8fe5c09678c726b67de985",
+              "keyLocation": "https://lusotop.online/1c2e50b61c8fe5c09678c726b67de985.txt",
+              "urlList": [
+                "https://lusotop.online",
+                "https://lusotop.online/paises/ao",
+                "https://lusotop.online/paises/br",
+                "https://lusotop.online/paises/cv",
+                "https://lusotop.online/paises/gw",
+                "https://lusotop.online/paises/mz",
+                "https://lusotop.online/paises/pt",
+                "https://lusotop.online/paises/st"
+              ]
+            }' || true
