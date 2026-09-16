@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -132,10 +133,19 @@ public class CatalogSyncService {
     /** Resposta bruta do GetProducts para os provider codes que usamos (inspeção/depuração). */
     @Transactional(readOnly = true)
     public String rawDingConnectCatalog() {
-        Set<String> providerCodes = operatorRepository.findAll().stream()
+        return rawDingConnectCatalog(operatorRepository.findAll().stream()
                 .map(Operator::getProviderCode)
                 .filter(c -> c != null && !c.isBlank())
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
+    }
+
+    /**
+     * Como {@link #rawDingConnectCatalog()}, mas com os provider codes explícitos (para
+     * diagnosticar se o problema é a lista completa ou provider codes específicos -- ex: um
+     * único código, ou nenhum para pedir o catálogo sem filtro nenhum).
+     */
+    @Transactional(readOnly = true)
+    public String rawDingConnectCatalog(Collection<String> providerCodes) {
         return dingConnectService.getProductsRaw(providerCodes);
     }
 

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -29,10 +30,22 @@ public class AdminCatalogController {
         return catalogSyncService.audit();
     }
 
-    /** Resposta bruta do GetProducts da DingConnect (para inspeção antes de sincronizar). */
+    /**
+     * Resposta bruta do GetProducts da DingConnect (para inspeção antes de sincronizar). Sem
+     * parametro usa os provider codes de todas as operadoras configuradas; passa
+     * {@code ?providerCodes=} (vazio) para pedir sem filtro nenhum, ou uma lista separada por
+     * vírgulas para testar codigos especificos -- util para diagnosticar se um catalogo vazio e
+     * por causa da lista completa ou de codigos concretos.
+     */
     @GetMapping(value = "/dingconnect-raw", produces = "text/plain")
-    public String dingConnectRaw() {
-        return catalogSyncService.rawDingConnectCatalog();
+    public String dingConnectRaw(@RequestParam(required = false) String providerCodes) {
+        if (providerCodes == null) {
+            return catalogSyncService.rawDingConnectCatalog();
+        }
+        List<String> codes = providerCodes.isBlank()
+                ? List.of()
+                : Arrays.stream(providerCodes.split(",")).map(String::trim).filter(c -> !c.isBlank()).toList();
+        return catalogSyncService.rawDingConnectCatalog(codes);
     }
 
     /** SKUs de dados móveis no catálogo real da DingConnect que ainda não temos como produto. */
