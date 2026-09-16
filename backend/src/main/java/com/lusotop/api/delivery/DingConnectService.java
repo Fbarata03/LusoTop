@@ -26,8 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Envio real de recarga via DingConnect (SendTransfer). A API espera/devolve campos em
@@ -149,18 +147,10 @@ public class DingConnectService {
                         + " -- " + truncate(result.body()));
             }
             GetProductsResponse response = MAPPER.readValue(result.body(), GetProductsResponse.class);
-            List<DingProduct> items = response.items() == null ? List.of() : response.items();
-            // Bug real: a DingConnect pode devolver HTTP 200 com Items vazio/nulo mas ResultCode
-            // != 1 e ErrorCodes preenchido (ex: ProviderCodes mal formatado, autenticacao). Sem
-            // este log, isso passava por um catalogo legitimamente vazio -- sem qualquer registo
-            // do porque, e o audit/resync interpretava-o como "SKU ja nao existe" para TUDO.
-            if (items.isEmpty()) {
-                log.warn("GetProducts devolveu catalogo vazio para providerCodes={} (ResultCode={}, ErrorCodes={}): {}",
-                        providerCodes, response.resultCode(), response.errorCodes(), truncate(result.body()));
-            } else {
-                log.info("GetProducts devolveu {} produtos para providerCodes={}", items.size(), providerCodes);
+            if (response.items() == null) {
+                return List.of();
             }
-            return items;
+            return response.items();
         } catch (IllegalStateException e) {
             throw e;
         } catch (Exception e) {
@@ -277,22 +267,7 @@ public class DingConnectService {
                 );
             }
 
-            // A DingConnect devolve o mesmo corpo estruturado (ResultCode/ErrorCodes/TransferRecord)
-            // tanto em 2xx como em 4xx -- por isso tenta-se sempre interpretar o JSON antes de
-            // recorrer a deteccao grosseira por substring no texto cru (classifyHttpStatus). Bug
-            // real detetado em producao: um HTTP 400 com ErrorCodes=[{Code:ParameterOutOfRange,
-            // Context:SendValue}] (nada a ver com o numero de telefone) era classificado como
-            // INVALID_ACCOUNT so porque o corpo ecoa sempre o campo "AccountNumber" dentro de
-            // TransferRecord -- fazendo QUALQUER erro 400, de qualquer operadora, aparecer ao
-            // cliente como "numero invalido para a operadora".
-            SendTransferResponse response;
-            try {
-                response = MAPPER.readValue(result.body(), SendTransferResponse.class);
-            } catch (Exception parseError) {
-                response = null;
-            }
-
-            if (response == null) {
+            if (result.statusCode() < 200 || result.statusCode() >= 300) {
                 ErrorKind kind = classifyHttpStatus(result.statusCode(), result.body());
                 log.error("DingConnect SendTransfer devolveu HTTP {} ({}) para sku={} ref={}: {}",
                         result.statusCode(), kind, skuCode, distributorRef, result.body());
@@ -302,8 +277,9 @@ public class DingConnectService {
                 );
             }
 
-            boolean success = result.statusCode() >= 200 && result.statusCode() < 300
-                    && response.resultCode() == 1
+            SendTransferResponse response = MAPPER.readValue(result.body(), SendTransferResponse.class);
+
+            boolean success = response.resultCode() == 1
                     && response.transferRecord() != null
                     && SUCCESS_STATES.contains(response.transferRecord().processingState());
 
@@ -315,17 +291,18 @@ public class DingConnectService {
                 );
             }
 
-            List<DingConnectError> errorCodes = response.errorCodes() == null ? List.of() : response.errorCodes();
-            ErrorKind kind = classifyErrorCodes(errorCodes, response.transferRecord());
+            List<String> codes = response.errorCodes() == null ? List.of()
+                    : response.errorCodes().stream().map(DingConnectError::code).filter(c -> c != null).toList();
+            ErrorKind kind = classifyErrorCodes(codes, response.transferRecord());
 
             if (kind == ErrorKind.ALREADY_SENT) {
                 log.warn("DingConnect SendTransfer: DistributorRef {} ja usado -- transferencia anterior considerada entregue.", distributorRef);
                 return DingConnectTransferResult.alreadySent();
             }
 
-            String errorSummary = errorCodes.isEmpty()
+            String errorSummary = codes.isEmpty()
                     ? "Estado: " + (response.transferRecord() != null ? response.transferRecord().processingState() : "desconhecido")
-                    : errorCodes.stream().map(DingConnectService::describeError).collect(Collectors.joining(", "));
+                    : String.join(", ", codes);
             log.error("DingConnect SendTransfer sem sucesso ({}) para sku={} ref={}: {}", kind, skuCode, distributorRef, errorSummary);
             return DingConnectTransferResult.failure(truncate(errorSummary), kind);
         } catch (Exception e) {
@@ -358,14 +335,8 @@ public class DingConnectService {
         return ErrorKind.UNKNOWN;
     }
 
-    private ErrorKind classifyErrorCodes(List<DingConnectError> errorCodes, TransferRecord record) {
-        // Inclui o Context (ex: "SendValue", "AccountNumber") e nao so o Code (ex:
-        // "ParameterOutOfRange") -- o Code por si só é ambíguo sobre QUAL parametro falhou.
-        String joined = errorCodes.stream()
-                .flatMap(e -> Stream.of(e.code(), e.context()))
-                .filter(c -> c != null && !c.isBlank())
-                .collect(Collectors.joining(" "))
-                .toLowerCase(Locale.ROOT);
+    private ErrorKind classifyErrorCodes(List<String> codes, TransferRecord record) {
+        String joined = String.join(" ", codes).toLowerCase(Locale.ROOT);
         if (joined.contains("authenticationfailed") || joined.contains("unavailable") || joined.contains("timeout")) {
             return ErrorKind.SERVICE_UNAVAILABLE;
         }
@@ -379,24 +350,16 @@ public class DingConnectService {
             return ErrorKind.INSUFFICIENT_FLOAT;
         }
         if (joined.contains("sku") || joined.contains("sendvalue") || joined.contains("sendcurrency")
-                || joined.contains("parametercombination") || joined.contains("product")
-                || joined.contains("parameteroutofrange")) {
+                || joined.contains("parametercombination") || joined.contains("product")) {
             return ErrorKind.INVALID_PRODUCT;
         }
         // Sem codigos mas com um TransferRecord em estado terminal de falha -> falha real da operadora.
-        if (errorCodes.isEmpty() && record != null && record.processingState() != null
+        if (codes.isEmpty() && record != null && record.processingState() != null
                 && (record.processingState().equalsIgnoreCase("Failed")
                 || record.processingState().equalsIgnoreCase("Declined"))) {
             return ErrorKind.INVALID_ACCOUNT;
         }
         return ErrorKind.UNKNOWN;
-    }
-
-    private static String describeError(DingConnectError error) {
-        if (error.context() == null || error.context().isBlank()) {
-            return error.code();
-        }
-        return error.code() + " (" + error.context() + ")";
     }
 
     private void sleep(long millis) {

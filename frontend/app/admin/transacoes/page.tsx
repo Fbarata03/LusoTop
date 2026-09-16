@@ -144,22 +144,8 @@ export default function AdminTransacoesPage() {
                     </td>
                     <td className="p-3 text-foreground">{order.phoneNumber}</td>
                     <td className="p-3 text-foreground">
-                      {order.adminFree ? (
-                        <>
-                          <p>Grátis</p>
-                          {order.realPayerAmount !== null && (
-                            <p className="text-xs text-muted-foreground">
-                              valor real: {order.realPayerAmount.toLocaleString("pt-PT", { maximumFractionDigits: 2 })}{" "}
-                              {order.payerCurrency}
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          {order.payerAmount.toLocaleString("pt-PT", { maximumFractionDigits: 2 })}{" "}
-                          {order.payerCurrency}
-                        </>
-                      )}
+                      {order.payerAmount.toLocaleString("pt-PT", { maximumFractionDigits: 2 })}{" "}
+                      {order.payerCurrency}
                     </td>
                     <td className="p-3">
                       <StatusBadge value={order.status} />
@@ -213,19 +199,9 @@ function OrderCard({ order }: { order: AdminOrder }) {
             <p className="text-sm text-muted-foreground">Sem conta</p>
           )}
         </div>
-        <div className="shrink-0 text-right">
-          <p className="font-heading text-base font-semibold text-foreground">
-            {order.adminFree
-              ? "Grátis"
-              : `${order.payerAmount.toLocaleString("pt-PT", { maximumFractionDigits: 2 })} ${order.payerCurrency}`}
-          </p>
-          {order.adminFree && order.realPayerAmount !== null && (
-            <p className="text-xs text-muted-foreground">
-              valor real: {order.realPayerAmount.toLocaleString("pt-PT", { maximumFractionDigits: 2 })}{" "}
-              {order.payerCurrency}
-            </p>
-          )}
-        </div>
+        <p className="shrink-0 font-heading text-base font-semibold text-foreground">
+          {order.payerAmount.toLocaleString("pt-PT", { maximumFractionDigits: 2 })} {order.payerCurrency}
+        </p>
       </div>
 
       <p className="mt-2 text-sm text-foreground">

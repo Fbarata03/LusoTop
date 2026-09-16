@@ -78,8 +78,6 @@ const orderSummarySchema = z.object({
   productCurrency: z.string(),
   payerAmount: z.number(),
   payerCurrency: z.string(),
-  adminFree: z.boolean(),
-  realPayerAmount: z.number().nullable(),
   createdAt: z.string(),
 });
 
@@ -278,8 +276,6 @@ const adminOrderSchema = z.object({
   phoneNumber: z.string(),
   payerAmount: z.number(),
   payerCurrency: z.string(),
-  adminFree: z.boolean(),
-  realPayerAmount: z.number().nullable(),
   stripePaymentIntentId: z.string().nullable(),
   dingconnectTransferRef: z.string().nullable(),
   deliveryError: z.string().nullable(),

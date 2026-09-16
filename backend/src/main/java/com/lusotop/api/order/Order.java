@@ -92,10 +92,6 @@ public class Order {
     @Column(name = "admin_free", nullable = false)
     private boolean adminFree;
 
-    /** Para pedidos admin_free: o que a recarga custaria a um cliente normal (null nos outros). */
-    @Column(name = "real_payer_amount")
-    private BigDecimal realPayerAmount;
-
     @Column(name = "stripe_refund_id")
     private String stripeRefundId;
 
