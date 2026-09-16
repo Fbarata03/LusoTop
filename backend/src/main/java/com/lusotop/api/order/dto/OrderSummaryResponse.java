@@ -19,6 +19,8 @@ public record OrderSummaryResponse(
         String productCurrency,
         BigDecimal payerAmount,
         String payerCurrency,
+        boolean adminFree,
+        BigDecimal realPayerAmount,
         Instant createdAt
 ) {
 
@@ -37,6 +39,8 @@ public record OrderSummaryResponse(
                 order.getProductCurrency(),
                 order.getPayerAmount(),
                 order.getPayerCurrency(),
+                order.isAdminFree(),
+                order.getRealPayerAmount(),
                 order.getCreatedAt()
         );
     }

@@ -110,7 +110,11 @@ public class OrderService {
         // pagas. A pre-validacao DingConnect continua a correr: nao vale a pena "gastar" saldo
         // da DingConnect numa recarga que ia falhar de qualquer forma.
         boolean adminFree = user.getRole() == UserRole.ADMIN;
+        BigDecimal realPayerAmount = null;
         if (adminFree) {
+            // Guarda o preco real antes de zerar -- sem isto perdia-se para sempre o valor que a
+            // recarga custaria a um cliente normal (historico "Minhas recargas", relatorios admin).
+            realPayerAmount = payerAmount;
             payerAmount = BigDecimal.ZERO;
         } else {
             // Guardiao anti-prejuizo: nunca cria um checkout cujo preco nao cobre o custo real da
@@ -136,6 +140,7 @@ public class OrderService {
         order.setPayerAmount(payerAmount);
         order.setPayerCurrency(payerCurrency);
         order.setAdminFree(adminFree);
+        order.setRealPayerAmount(realPayerAmount);
         order.setStatus(OrderStatus.PENDING);
         order = orderRepository.save(order);
 

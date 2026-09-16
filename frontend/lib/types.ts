@@ -60,5 +60,7 @@ export interface OrderSummary {
   productCurrency: string;
   payerAmount: number;
   payerCurrency: string;
+  adminFree: boolean;
+  realPayerAmount: number | null;
   createdAt: string;
 }

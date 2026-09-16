@@ -124,10 +124,22 @@ function OrderCard({ order }: { order: OrderSummary }) {
             })}
           </p>
         </div>
-        <p className="shrink-0 font-heading text-lg font-semibold text-foreground">
-          {order.payerAmount.toLocaleString("pt-PT", { maximumFractionDigits: 2 })}{" "}
-          {order.payerCurrency}
-        </p>
+        <div className="shrink-0 text-right">
+          <p className="font-heading text-lg font-semibold text-foreground">
+            {order.adminFree ? "Grátis" : (
+              <>
+                {order.payerAmount.toLocaleString("pt-PT", { maximumFractionDigits: 2 })}{" "}
+                {order.payerCurrency}
+              </>
+            )}
+          </p>
+          {order.adminFree && order.realPayerAmount !== null && (
+            <p className="text-xs text-muted-foreground">
+              valor real: {order.realPayerAmount.toLocaleString("pt-PT", { maximumFractionDigits: 2 })}{" "}
+              {order.payerCurrency}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="mt-3 flex items-center gap-1.5 text-sm">
