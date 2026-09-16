@@ -18,6 +18,7 @@ import com.lusotop.api.order.dto.OrderSummaryResponse;
 import com.lusotop.api.product.AirtimeProduct;
 import com.lusotop.api.product.AirtimeProductRepository;
 import com.lusotop.api.user.User;
+import com.lusotop.api.user.UserRole;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
 import com.stripe.model.checkout.Session;
@@ -104,10 +105,20 @@ public class OrderService {
                 ? BigDecimal.valueOf(product.getPayerAmountCents(), 2)
                 : convert(product.getAmount(), product.getCurrency(), payerCurrency);
 
-        // Guardiao anti-prejuizo: nunca cria um checkout cujo preco nao cobre o custo real da
-        // recarga + taxa Stripe + margem minima. Protege contra erros no catalogo (preco ou custo
-        // mal configurados) -- no pior caso o produto fica indisponivel, nunca dando prejuizo.
-        guardMargin(product, payerAmount);
+        // A conta admin pode enviar recargas sem pagar (uso proprio / testes / suporte a
+        // clientes) -- salta o Stripe e o guardiao de margem, que so faz sentido para vendas
+        // pagas. A pre-validacao DingConnect continua a correr: nao vale a pena "gastar" saldo
+        // da DingConnect numa recarga que ia falhar de qualquer forma.
+        boolean adminFree = user.getRole() == UserRole.ADMIN;
+        if (adminFree) {
+            payerAmount = BigDecimal.ZERO;
+        } else {
+            // Guardiao anti-prejuizo: nunca cria um checkout cujo preco nao cobre o custo real da
+            // recarga + taxa Stripe + margem minima. Protege contra erros no catalogo (preco ou
+            // custo mal configurados) -- no pior caso o produto fica indisponivel, nunca dando
+            // prejuizo.
+            guardMargin(product, payerAmount);
+        }
 
         // Valida a recarga junto da DingConnect ANTES de cobrar o cliente. Se o numero for
         // invalido para a operadora, ou se o servico de entrega estiver indisponivel, o cliente
@@ -124,8 +135,17 @@ public class OrderService {
         order.setProductCurrency(product.getCurrency());
         order.setPayerAmount(payerAmount);
         order.setPayerCurrency(payerCurrency);
+        order.setAdminFree(adminFree);
         order.setStatus(OrderStatus.PENDING);
         order = orderRepository.save(order);
+
+        if (adminFree) {
+            order.setStatus(OrderStatus.PAID);
+            deliverProduct(order);
+            orderRepository.save(order);
+            log.info("Pedido admin gratuito {} criado e entregue sem checkout Stripe.", order.getId());
+            return new CreateOrderResponse(order.getId(), null);
+        }
 
         Session session = createCheckoutSession(order, operator, country, product);
         order.setStripeCheckoutSessionId(session.getId());
@@ -167,6 +187,12 @@ public class OrderService {
                 .toList();
     }
 
+    public OrderSummaryResponse findMyOrder(Long orderId, User user) {
+        Order order = orderRepository.findByIdAndUserId(orderId, user.getId())
+                .orElseThrow(() -> new NotFoundException("ORDER_NOT_FOUND", "Pedido não encontrado."));
+        return OrderSummaryResponse.from(order);
+    }
+
     @Transactional(readOnly = true)
     public byte[] generateReceipt(Long orderId, User user) {
         Order order = orderRepository.findByIdAndUserId(orderId, user.getId())
@@ -199,7 +225,10 @@ public class OrderService {
     private void markPaidAndDeliver(Order order, Session session) {
         order.setStatus(OrderStatus.PAID);
         order.setStripePaymentIntentId(session.getPaymentIntent());
+        deliverProduct(order);
+    }
 
+    private void deliverProduct(Order order) {
         if (order.getDeliveryStatus() == DeliveryStatus.DELIVERED) return;
 
         AirtimeProduct product = order.getProduct();

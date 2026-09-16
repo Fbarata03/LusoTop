@@ -47,6 +47,11 @@ public class OrderController {
         return orderService.findMyOrders(user);
     }
 
+    @GetMapping("/{id}")
+    public OrderSummaryResponse getOne(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        return orderService.findMyOrder(id, user);
+    }
+
     @GetMapping("/{id}/receipt")
     public ResponseEntity<byte[]> receipt(@PathVariable Long id, @AuthenticationPrincipal User user) {
         byte[] pdf = orderService.generateReceipt(id, user);

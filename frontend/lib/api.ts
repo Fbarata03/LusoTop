@@ -61,7 +61,7 @@ export type ExchangeRate = z.infer<typeof rateSchema>;
 
 const createOrderResponseSchema = z.object({
   orderId: z.number(),
-  checkoutUrl: z.string(),
+  checkoutUrl: z.string().nullable(),
 });
 
 const orderSummarySchema = z.object({
@@ -196,7 +196,7 @@ export function createOrder(payload: {
   operatorId: number;
   productId: number;
   phoneNumber: string;
-}): Promise<{ orderId: number; checkoutUrl: string }> {
+}): Promise<{ orderId: number; checkoutUrl: string | null }> {
   return request("/api/orders", createOrderResponseSchema, {
     method: "POST",
     headers: authHeaders(),
@@ -209,6 +209,12 @@ export function confirmOrder(sessionId: string): Promise<OrderSummary> {
     `/api/orders/session/${encodeURIComponent(sessionId)}`,
     orderSummarySchema
   );
+}
+
+export function fetchOrder(orderId: number): Promise<OrderSummary> {
+  return request(`/api/orders/${orderId}`, orderSummarySchema, {
+    headers: authHeaders(),
+  });
 }
 
 export function fetchMyOrders(): Promise<OrderSummary[]> {

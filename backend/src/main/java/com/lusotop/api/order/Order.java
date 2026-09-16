@@ -89,6 +89,9 @@ public class Order {
     @Column(nullable = false)
     private boolean refunded;
 
+    @Column(name = "admin_free", nullable = false)
+    private boolean adminFree;
+
     @Column(name = "stripe_refund_id")
     private String stripeRefundId;
 

@@ -72,13 +72,18 @@ export function ResumoStep({
     setPayError(null);
     setPaying(true);
     try {
-      const { checkoutUrl } = await createOrder({
+      const { orderId, checkoutUrl } = await createOrder({
         countryIso: country.isoCode,
         operatorId: operator.id,
         productId: product.id,
         phoneNumber,
       });
-      window.location.href = checkoutUrl;
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else {
+        // Conta admin: recarga já foi enviada sem pagamento, sem sessão Stripe.
+        window.location.href = `/recarga/sucesso?order_id=${orderId}`;
+      }
     } catch (err) {
       setPayError(
         err instanceof ApiError ? err.message : "Não foi possível iniciar o pagamento."

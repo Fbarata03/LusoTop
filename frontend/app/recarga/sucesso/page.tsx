@@ -9,30 +9,40 @@ import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FlagIcon } from "@/components/ui/flag-icon";
-import { ApiError, confirmOrder } from "@/lib/api";
+import { ApiError, confirmOrder, fetchOrder } from "@/lib/api";
 import type { OrderSummary } from "@/lib/types";
 
 function SucessoContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const orderIdParam = searchParams.get("order_id");
 
   const [order, setOrder] = useState<OrderSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!sessionId) {
-      setError("Sessão de pagamento não encontrada.");
-      setLoading(false);
+    if (sessionId) {
+      confirmOrder(sessionId)
+        .then(setOrder)
+        .catch((err) =>
+          setError(err instanceof ApiError ? err.message : "Não foi possível confirmar o pagamento.")
+        )
+        .finally(() => setLoading(false));
       return;
     }
-    confirmOrder(sessionId)
-      .then(setOrder)
-      .catch((err) =>
-        setError(err instanceof ApiError ? err.message : "Não foi possível confirmar o pagamento.")
-      )
-      .finally(() => setLoading(false));
-  }, [sessionId]);
+    if (orderIdParam) {
+      fetchOrder(Number(orderIdParam))
+        .then(setOrder)
+        .catch((err) =>
+          setError(err instanceof ApiError ? err.message : "Não foi possível carregar a recarga.")
+        )
+        .finally(() => setLoading(false));
+      return;
+    }
+    setError("Sessão de pagamento não encontrada.");
+    setLoading(false);
+  }, [sessionId, orderIdParam]);
 
   return (
     <Card className="w-full max-w-md p-6 text-center">
