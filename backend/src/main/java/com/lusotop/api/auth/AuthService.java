@@ -31,8 +31,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HexFormat;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AuthService {
@@ -47,6 +49,19 @@ public class AuthService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final Duration RESET_TOKEN_TTL = Duration.ofHours(1);
+
+    // Bloqueio de conta por password errada repetida, por email -- fecha a lacuna que o
+    // AuthRateLimitFilter (por IP) deixa aberta: um atacante distribuido por muitos IPs
+    // continuaria a conseguir adivinhar a password de uma conta especifica (ex: a conta admin,
+    // que agora pode enviar recargas sem pagar) sem nunca ultrapassar o limite por IP. So
+    // single-instance (em memoria), tal como o AuthRateLimitFilter -- suficiente porque o backend
+    // corre numa unica instancia no Render.
+    private static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
+    private static final Duration LOGIN_LOCKOUT_DURATION = Duration.ofMinutes(15);
+    private final Map<String, LoginAttemptState> failedLoginAttemptsByEmail = new ConcurrentHashMap<>();
+
+    private record LoginAttemptState(int failures, Instant lockedUntil) {
+    }
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -94,7 +109,14 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        String emailKey = request.email().toLowerCase();
         Optional<User> user = userRepository.findByEmailIgnoreCase(request.email());
+
+        // So conta com login existente pode ficar bloqueada -- rastrear emails inexistentes
+        // deixaria um atacante encher o mapa em memoria so por tentar emails ao acaso.
+        if (user.isPresent() && isLoginLocked(emailKey)) {
+            throw new BadCredentialsException("Email ou password incorretos.");
+        }
 
         // Compara sempre contra um hash (real ou dummy) antes de decidir, para que o tempo de
         // resposta nao revele se o email existe.
@@ -102,10 +124,27 @@ public class AuthService {
         boolean matches = passwordEncoder.matches(request.password(), hashToCheck);
 
         if (user.isEmpty() || !matches) {
+            user.ifPresent(u -> registerFailedLoginAttempt(emailKey));
             throw new BadCredentialsException("Email ou password incorretos.");
         }
 
+        failedLoginAttemptsByEmail.remove(emailKey);
         return buildAuthResponse(user.get());
+    }
+
+    private boolean isLoginLocked(String emailKey) {
+        LoginAttemptState state = failedLoginAttemptsByEmail.get(emailKey);
+        return state != null && state.lockedUntil() != null && Instant.now().isBefore(state.lockedUntil());
+    }
+
+    private void registerFailedLoginAttempt(String emailKey) {
+        failedLoginAttemptsByEmail.compute(emailKey, (key, existing) -> {
+            int failures = (existing == null ? 0 : existing.failures()) + 1;
+            Instant lockedUntil = failures >= MAX_FAILED_LOGIN_ATTEMPTS
+                    ? Instant.now().plus(LOGIN_LOCKOUT_DURATION)
+                    : null;
+            return new LoginAttemptState(failures, lockedUntil);
+        });
     }
 
     public AuthResponse loginWithGoogle(String idToken) {
