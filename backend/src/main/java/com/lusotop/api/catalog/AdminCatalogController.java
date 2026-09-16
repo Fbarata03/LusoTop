@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
  * Endpoints de admin para sincronizar os preços/custos do catálogo com o catálogo real da
  * DingConnect. Protegido por {@code /api/admin/**} → ROLE_ADMIN (ver SecurityConfig).
@@ -31,6 +33,12 @@ public class AdminCatalogController {
     @GetMapping(value = "/dingconnect-raw", produces = "text/plain")
     public String dingConnectRaw() {
         return catalogSyncService.rawDingConnectCatalog();
+    }
+
+    /** SKUs de dados móveis no catálogo real da DingConnect que ainda não temos como produto. */
+    @GetMapping("/data-candidates")
+    public List<DataProductCandidate> dataCandidates() {
+        return catalogSyncService.discoverDataProducts();
     }
 
     /** Aplica as correções. Exige {@code ?confirm=true} para evitar disparos acidentais. */

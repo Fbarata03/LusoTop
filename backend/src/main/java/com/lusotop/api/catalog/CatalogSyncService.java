@@ -19,6 +19,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -69,6 +70,63 @@ public class CatalogSyncService {
     @Transactional
     public CatalogAuditReport resync() {
         return run(true);
+    }
+
+    /**
+     * SKUs do catálogo real da DingConnect cujos Benefits sugerem pacotes de dados móveis (não
+     * saldo/airtime) para as operadoras já configuradas -- para decidir se vale a pena criar
+     * produtos novos. Não escreve nada.
+     */
+    @Transactional(readOnly = true)
+    public List<DataProductCandidate> discoverDataProducts() {
+        List<Operator> operators = operatorRepository.findAll();
+        Set<String> providerCodes = operators.stream()
+                .map(Operator::getProviderCode)
+                .filter(c -> c != null && !c.isBlank())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        List<DingProduct> catalog;
+        try {
+            catalog = dingConnectService.getProducts(providerCodes);
+        } catch (RuntimeException e) {
+            throw new BadRequestException("DINGCONNECT_CATALOG_ERROR", e.getMessage());
+        }
+
+        Map<String, Operator> byProviderCode = operators.stream()
+                .filter(o -> o.getProviderCode() != null && !o.getProviderCode().isBlank())
+                .collect(Collectors.toMap(Operator::getProviderCode, Function.identity(), (a, b) -> a));
+
+        Set<String> existingSkus = productRepository.findAll().stream()
+                .map(AirtimeProduct::getDingconnectSkuCode)
+                .filter(s -> s != null && !s.isBlank())
+                .collect(Collectors.toSet());
+
+        List<DataProductCandidate> candidates = new ArrayList<>();
+        for (DingProduct product : catalog) {
+            if (product.benefits() == null) {
+                continue;
+            }
+            boolean looksLikeData = product.benefits().stream()
+                    .anyMatch(b -> b != null && b.toLowerCase(Locale.ROOT).contains("data"));
+            if (!looksLikeData) {
+                continue;
+            }
+            Operator operator = byProviderCode.get(product.providerCode());
+            DingPriceBound min = product.minimum();
+            DingPriceBound max = product.maximum();
+            candidates.add(new DataProductCandidate(
+                    operator != null ? operator.getName() : null,
+                    operator != null ? operator.getId() : null,
+                    product.providerCode(),
+                    product.skuCode(),
+                    product.benefits(),
+                    min != null ? min.sendValue() : null,
+                    max != null ? max.sendValue() : null,
+                    min != null ? min.sendCurrencyIso() : null,
+                    existingSkus.contains(product.skuCode())
+            ));
+        }
+        return candidates;
     }
 
     /** Resposta bruta do GetProducts para os provider codes que usamos (inspeção/depuração). */
