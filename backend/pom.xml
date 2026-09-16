@@ -19,6 +19,10 @@
 
     <properties>
         <java.version>21</java.version>
+        <!-- O parente do Spring Boot 3.3.4 fixa lombok 1.18.34, que crasha
+             (ExceptionInInitializerError: TypeTag :: UNKNOWN) com o compilador do JDK 24 (a
+             maquina de build local so tem JDK 24 instalado). 1.18.48 corrige isso. -->
+        <lombok.version>1.18.48</lombok.version>
     </properties>
 
     <dependencies>
@@ -122,6 +126,22 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- O javac deste JDK ja nao descobre processadores de anotacao so pela
+                         classpath, precisa do processorpath explicito, ou o Lombok fica
+                         silenciosamente inativo (getters/setters ausentes, sem erro nenhum). -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
         </plugins>
