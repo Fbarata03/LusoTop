@@ -149,10 +149,18 @@ public class DingConnectService {
                         + " -- " + truncate(result.body()));
             }
             GetProductsResponse response = MAPPER.readValue(result.body(), GetProductsResponse.class);
-            if (response.items() == null) {
-                return List.of();
+            List<DingProduct> items = response.items() == null ? List.of() : response.items();
+            // Bug real: a DingConnect pode devolver HTTP 200 com Items vazio/nulo mas ResultCode
+            // != 1 e ErrorCodes preenchido (ex: ProviderCodes mal formatado, autenticacao). Sem
+            // este log, isso passava por um catalogo legitimamente vazio -- sem qualquer registo
+            // do porque, e o audit/resync interpretava-o como "SKU ja nao existe" para TUDO.
+            if (items.isEmpty()) {
+                log.warn("GetProducts devolveu catalogo vazio para providerCodes={} (ResultCode={}, ErrorCodes={}): {}",
+                        providerCodes, response.resultCode(), response.errorCodes(), truncate(result.body()));
+            } else {
+                log.info("GetProducts devolveu {} produtos para providerCodes={}", items.size(), providerCodes);
             }
-            return response.items();
+            return items;
         } catch (IllegalStateException e) {
             throw e;
         } catch (Exception e) {
