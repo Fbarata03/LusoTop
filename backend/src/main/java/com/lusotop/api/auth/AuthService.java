@@ -94,13 +94,17 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmailIgnoreCase(request.email())) {
+        // strip() -- o teclado movel (autocapitalize/autocorrect) por vezes deixa um espaco a
+        // mais no fim do email, o que faz o email "parecer" novo (findByEmailIgnoreCase nao
+        // apanha espacos) e cria uma segunda conta em vez de reutilizar a existente.
+        String email = request.email().strip();
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new ConflictException("EMAIL_ALREADY_EXISTS", "Já existe uma conta com este email.");
         }
 
         User user = new User();
         user.setName(request.name());
-        user.setEmail(request.email().toLowerCase());
+        user.setEmail(email.toLowerCase());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(UserRole.USER);
         user = userRepository.save(user);
@@ -109,8 +113,12 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        String emailKey = request.email().toLowerCase();
-        Optional<User> user = userRepository.findByEmailIgnoreCase(request.email());
+        // strip() -- mesmo motivo do register(): um espaco invisivel vindo do autofill do
+        // telemovel faz o email nao coincidir com a conta real, respondendo sempre "incorretos"
+        // mesmo com a password certa.
+        String email = request.email().strip();
+        String emailKey = email.toLowerCase();
+        Optional<User> user = userRepository.findByEmailIgnoreCase(email);
 
         // So conta com login existente pode ficar bloqueada -- rastrear emails inexistentes
         // deixaria um atacante encher o mapa em memoria so por tentar emails ao acaso.
@@ -187,7 +195,7 @@ public class AuthService {
     /** Sempre "sucesso" do ponto de vista do chamador, exista ou nao o email -- evita confirmar
      * quais emails tem conta. */
     public void forgotPassword(String email) {
-        userRepository.findByEmailIgnoreCase(email).ifPresent(user -> {
+        userRepository.findByEmailIgnoreCase(email.strip()).ifPresent(user -> {
             String rawToken = generateRawToken();
 
             PasswordResetToken resetToken = new PasswordResetToken();
