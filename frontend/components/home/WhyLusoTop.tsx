@@ -48,29 +48,13 @@ const BENEFITS = [
 
 export function WhyLusoTop() {
   return (
-    <section className="bg-background py-24">
-      <div className="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-2">
+    <section className="bg-background py-20 sm:py-24">
+      <div className="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
         <div>
-          <div className="relative mb-10 h-72 w-full max-w-sm">
-            <div className="absolute inset-0 rounded-[2.5rem] bg-primary/15" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/hero-phone-2.jpg"
-              alt="Utilizadora sorridente a usar o telemóvel"
-              className="absolute top-0 left-0 h-56 w-44 rounded-3xl border-4 border-background object-cover shadow-lg"
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/hero-phone-1.jpg"
-              alt="Pessoa a enviar uma recarga pelo telemóvel"
-              className="absolute right-0 bottom-0 h-52 w-40 rounded-3xl border-4 border-background object-cover shadow-lg"
-            />
-          </div>
-
           <p className="text-sm font-semibold tracking-wide text-primary uppercase">
             Porquê LusoTop
           </p>
-          <h2 className="mt-3 font-heading text-4xl font-semibold text-foreground sm:text-5xl">
+          <h2 className="mt-3 font-heading text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl">
             Construída para{" "}
             <span className="italic text-primary">a comunidade lusófona</span>
           </h2>
@@ -80,20 +64,40 @@ export function WhyLusoTop() {
             pessoas que falam português em todo o mundo.
           </p>
 
-          <div className="mt-8 flex items-center gap-4 rounded-2xl bg-muted p-5">
-            <span className="font-heading text-4xl font-semibold text-foreground">
-              100%
-            </span>
-            <span className="text-sm text-muted-foreground">
-              das recargas são confirmadas antes de apresentarmos o resultado
-              ao utilizador.
-            </span>
+          <div className="relative mt-10 h-80 w-full max-w-md">
+            <div className="absolute inset-x-6 inset-y-4 rounded-[2.5rem] bg-primary/15" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/hero-phone-2.jpg"
+              alt="Utilizadora sorridente a usar o telemóvel"
+              loading="lazy"
+              className="absolute top-0 left-0 h-60 w-44 -rotate-2 rounded-3xl border-4 border-background object-cover shadow-xl"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/hero-phone-1.jpg"
+              alt="Pessoa a enviar uma recarga pelo telemóvel"
+              loading="lazy"
+              className="absolute top-8 right-0 h-56 w-40 rotate-2 rounded-3xl border-4 border-background object-cover shadow-xl"
+            />
+            <div className="absolute bottom-0 left-1/2 flex w-64 -translate-x-1/2 items-center gap-3 rounded-2xl bg-background p-4 shadow-xl ring-1 ring-foreground/5">
+              <span className="font-heading text-3xl font-semibold text-primary">
+                100%
+              </span>
+              <span className="text-xs leading-snug text-muted-foreground">
+                das recargas são confirmadas antes de apresentarmos o resultado
+                ao utilizador.
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="grid content-center gap-4 sm:grid-cols-2">
           {BENEFITS.map((benefit) => (
-            <div key={benefit.title} className="group">
+            <div
+              key={benefit.title}
+              className="group rounded-2xl border border-border p-5 transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
+            >
               <span
                 className={cn(
                   "flex size-10 items-center justify-center rounded-xl transition-colors",
