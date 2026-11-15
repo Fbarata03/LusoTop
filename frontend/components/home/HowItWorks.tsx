@@ -38,22 +38,25 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section id="como-funciona" className="bg-lusotop-cream py-24 dark:bg-lusotop-navy">
+    <section id="como-funciona" className="bg-background py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <p className="text-sm font-semibold tracking-wide text-primary uppercase">
           Processo
         </p>
-        <h2 className="mt-3 max-w-xl font-heading text-4xl font-semibold text-foreground sm:text-5xl">
+        <h2 className="mt-3 max-w-xl font-heading text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl">
           Em quatro passos simples
         </h2>
+        <p className="mt-4 max-w-xl text-muted-foreground">
+          Do país ao pagamento, tudo no mesmo ecrã, sem sair da página.
+        </p>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ol className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((step) => (
-            <div
+            <li
               key={step.number}
-              className="relative overflow-hidden rounded-2xl border border-border bg-background p-6 transition-all hover:-translate-y-0.5 hover:border-primary/30"
+              className="group relative overflow-hidden rounded-2xl border border-border bg-lusotop-cream/40 p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-background hover:shadow-lg hover:shadow-primary/5"
             >
-              <span className="absolute top-4 right-5 font-heading text-4xl font-semibold text-foreground/10">
+              <span className="absolute top-4 right-5 font-heading text-4xl font-semibold text-primary/20 transition-colors group-hover:text-primary/40">
                 {step.number}
               </span>
               <step.illustration className="h-16 w-16" />
@@ -61,9 +64,9 @@ export function HowItWorks() {
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {step.description}
               </p>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
     </section>
   );

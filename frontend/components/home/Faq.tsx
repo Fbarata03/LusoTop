@@ -1,3 +1,5 @@
+import { Plus } from "lucide-react";
+
 const FAQS = [
   {
     question: "Os pagamentos e as recargas já são reais?",
@@ -28,25 +30,25 @@ const FAQS = [
 
 export function Faq() {
   return (
-    <section id="ajuda" className="bg-lusotop-cream py-24 dark:bg-lusotop-navy">
+    <section id="ajuda" className="bg-lusotop-cream py-20 sm:py-24 dark:bg-lusotop-navy">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <p className="text-sm font-semibold tracking-wide text-primary uppercase">
           Ajuda
         </p>
-        <h2 className="mt-3 font-heading text-4xl font-semibold text-foreground sm:text-5xl">
+        <h2 className="mt-3 font-heading text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
           Perguntas frequentes
         </h2>
 
-        <div className="mt-10 divide-y divide-border rounded-2xl border border-border bg-background">
+        <div className="mt-10 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
           {FAQS.map((faq) => (
-            <details key={faq.question} className="group p-6">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-foreground marker:content-none">
+            <details key={faq.question} className="group">
+              <summary className="flex min-h-14 list-none items-center justify-between gap-4 px-6 py-5 font-medium text-foreground transition-colors marker:content-none hover:bg-lusotop-cream/40 [&::-webkit-details-marker]:hidden">
                 {faq.question}
-                <span className="shrink-0 text-xl text-muted-foreground transition-transform group-open:rotate-45">
-                  +
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform duration-200 group-open:rotate-45">
+                  <Plus className="size-4" aria-hidden="true" />
                 </span>
               </summary>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              <p className="px-6 pb-6 text-sm leading-relaxed text-muted-foreground">
                 {faq.answer}
               </p>
             </details>
