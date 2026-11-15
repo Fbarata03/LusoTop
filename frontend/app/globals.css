@@ -145,6 +145,8 @@
   --accent: oklch(0.64 0.19 149 / 18%);
   --accent-foreground: oklch(0.85 0.16 149);
   --ring: oklch(0.64 0.19 149);
+  /* O vermelho por omissao fica ilegivel sobre o vidro escuro -- versao mais clara. */
+  --destructive: oklch(0.78 0.15 25);
 }
 
 @layer base {
@@ -156,5 +158,35 @@
   }
   html {
     @apply font-sans;
+    /* Header sticky tem 64px: as ancoras (#como-funciona, #paises...) nao ficam tapadas. */
+    scroll-padding-top: 5rem;
+  }
+  ::selection {
+    background: oklch(0.64 0.19 149 / 25%);
+  }
+  a:focus-visible,
+  button:focus-visible,
+  summary:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+  summary,
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
