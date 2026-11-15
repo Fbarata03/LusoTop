@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Lock } from "lucide-react";
+import { LogoMark } from "@/components/illustrations/LogoMark";
 import { CPLP_COUNTRIES } from "@/lib/cplp-countries";
 
 const PLATFORM_LINKS = [
@@ -20,9 +22,12 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <span className="font-heading text-lg font-semibold text-white">
-              Luso<span className="text-primary">Top</span>
-            </span>
+            <Link href="/" className="inline-flex items-center gap-2">
+              <LogoMark className="size-8 shrink-0" />
+              <span className="font-heading text-lg font-semibold text-white">
+                Luso<span className="text-primary">Top</span>
+              </span>
+            </Link>
             <p className="mt-3 max-w-xs text-sm">
               Recargas simples.
               <br />
@@ -55,6 +60,10 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row sm:items-center">
           <p>© {new Date().getFullYear()} LusoTop. Todos os direitos reservados.</p>
+          <p className="flex items-center gap-1.5">
+            <Lock className="size-3.5 text-primary" aria-hidden="true" />
+            Pagamentos processados de forma segura pela Stripe
+          </p>
         </div>
       </div>
     </footer>
